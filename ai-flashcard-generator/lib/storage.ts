@@ -43,6 +43,27 @@ export function getSets(): StudySet[] {
   return cachedValue;
 }
 
+const DELETED_KEY = 'flashly:deleted:v1';
+
+export function getDeleted(): Record<string, number> {
+  try {
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(DELETED_KEY) ?? '{}');
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, number>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function setDeleted(map: Record<string, number>) {
+  try {
+    window.localStorage.setItem(DELETED_KEY, JSON.stringify(map));
+  } catch {
+    /* ignore */
+  }
+}
+
 function write(sets: StudySet[]): boolean {
   try {
     window.localStorage.setItem(KEY, JSON.stringify(sets));
@@ -81,13 +102,13 @@ export function useHydrated(): boolean {
 
 export function saveSet(set: StudySet): boolean {
   const others = getSets().filter((s) => s.id !== set.id);
-  return write([set, ...others]);
+  return write([{ ...set, modifiedAt: Date.now() }, ...others]);
 }
 
 export function updateSet(id: string, patch: Partial<StudySet>): void {
   write(
     getSets().map((s) =>
-      s.id === id ? { ...s, ...patch, updatedAt: Date.now() } : s
+      s.id === id ? { ...s, ...patch, updatedAt: Date.now(), modifiedAt: Date.now() } : s
     )
   );
 }
@@ -96,7 +117,7 @@ export function updateSet(id: string, patch: Partial<StudySet>): void {
 export function touchProgress(id: string, patch: Partial<StudySet>): void {
   write(
     getSets().map((s) =>
-      s.id === id ? { ...s, ...patch, lastStudied: Date.now() } : s
+      s.id === id ? { ...s, ...patch, lastStudied: Date.now(), modifiedAt: Date.now() } : s
     )
   );
 }
@@ -111,6 +132,7 @@ export function updateCard(
       s.id === setId
         ? {
             ...s,
+            modifiedAt: Date.now(),
             cards: s.cards.map((c) => (c.id === cardId ? { ...c, ...patch } : c)),
           }
         : s
@@ -133,7 +155,20 @@ export function deleteCard(setId: string, cardId: string): void {
 }
 
 export function deleteSet(id: string): void {
+  setDeleted({ ...getDeleted(), [id]: Date.now() });
   write(getSets().filter((s) => s.id !== id));
+}
+
+/** Replace the whole library (used when applying a synced snapshot). */
+export function replaceAll(sets: StudySet[], deleted: Record<string, number>): boolean {
+  setDeleted(deleted);
+  return write(sets);
+}
+
+/** Remove every set and tombstone from this device. */
+export function clearLocalLibrary(): void {
+  setDeleted({});
+  write([]);
 }
 
 export function resetProgress(setId: string): void {

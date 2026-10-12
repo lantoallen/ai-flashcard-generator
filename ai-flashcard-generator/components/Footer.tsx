@@ -41,7 +41,9 @@ export default function Footer() {
         <nav aria-label="Project">
           <h2 className="mb-3 text-sm font-extrabold uppercase tracking-wider">Project</h2>
           <ul className="flex flex-col gap-2 text-sm text-muted">
-            <li><Link className="hover:text-fg hover:underline" href="/about">About &amp; privacy</Link></li>
+            <li><Link className="hover:text-fg hover:underline" href="/about">About</Link></li>
+            <li><Link className="hover:text-fg hover:underline" href="/terms">Terms and Conditions</Link></li>
+            <li><Link className="hover:text-fg hover:underline" href="/privacy">Privacy Policy</Link></li>
             <li>
               <a
                 className="hover:text-fg hover:underline"

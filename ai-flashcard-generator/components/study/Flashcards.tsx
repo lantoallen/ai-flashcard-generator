@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import Confetti from '@/components/Confetti';
 import { Icon } from '@/components/icons';
 import { logActivity } from '@/lib/activity';
+import { ensureTerms } from '@/lib/consent';
+import { petReact } from '@/lib/pet';
 import { resetProgress, touchProgress, updateCard } from '@/lib/storage';
 import { shuffle } from '@/lib/utils';
 import {
@@ -53,6 +55,8 @@ export default function Flashcards({ setId, title, cards, goTo }: ModeProps) {
     if (!card) return;
     updateCard(setId, card.id, { known });
     logActivity(1);
+    if (known) petReact('cheer');
+    else petReact('oops', 'Practice makes perfect!');
     setFlipped(false);
     // In "still learning" mode a known card leaves the deck, so the index already points at the next one.
     if (!(filter === 'learning' && known)) setIndex((i) => i + 1);
@@ -60,6 +64,7 @@ export default function Flashcards({ setId, title, cards, goTo }: ModeProps) {
 
   async function explain() {
     if (!card || explains[card.id]?.status === 'loading') return;
+    if (!ensureTerms()) return;
     const id = card.id;
     setExplains((m) => ({ ...m, [id]: { status: 'loading', text: '' } }));
     try {

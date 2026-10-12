@@ -4,11 +4,10 @@ import {
   aiConfigured,
   aiFailure,
   clientIp,
-  groqModel,
   jsonError,
-  MODELS,
   NOT_CONFIGURED,
   rateLimited,
+  withFallback,
 } from '@/lib/server';
 
 // Allow AI calls to run longer than a host's default function timeout.
@@ -46,22 +45,15 @@ Definition: ${definition}
 
 Explain it in plain language in 2-3 short sentences, then give one concrete example or analogy that makes it stick. Do not use markdown headings or bullet points. Keep it under 90 words.`;
 
-  let lastError: unknown;
-  for (const model of MODELS) {
-    try {
-      const { text } = await generateText({
-        model: groqModel(model),
-        prompt,
-        providerOptions: AI_OPTIONS,
-      });
+  try {
+    const { value } = await withFallback(async (model) => {
+      const { text } = await generateText({ model, prompt, providerOptions: AI_OPTIONS });
       const explanation = text.trim();
-      if (explanation) return Response.json({ explanation });
-    } catch (err) {
-      lastError = err;
-      console.error(`Explain failed with ${model}:`, err);
-    }
+      if (!explanation) throw new Error('Empty explanation');
+      return explanation;
+    });
+    return Response.json({ explanation: value });
+  } catch (err) {
+    return aiFailure(err);
   }
-
-  console.error('All models failed:', lastError);
-  return aiFailure(lastError);
 }

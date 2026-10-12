@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { addPetXp } from './pet';
 
 /** Cards studied per local calendar day, for streaks and the daily goal. */
 
@@ -109,6 +110,34 @@ export function logActivity(n = 1): void {
     return;
   }
   window.dispatchEvent(new Event(EVENT));
+  addPetXp(n);
+}
+
+export function getActivity(): Days {
+  return read();
+}
+
+/** Replace the activity log (used when applying a synced snapshot). */
+export function replaceActivity(days: Days): void {
+  try {
+    window.localStorage.setItem(KEY, JSON.stringify(days));
+  } catch {
+    return;
+  }
+  window.dispatchEvent(new Event(EVENT));
+}
+
+export function getGoal(): number {
+  return readGoal();
+}
+
+/** The goal only if the user changed it (so a default never overwrites a synced value). */
+export function getStoredGoal(): number | undefined {
+  try {
+    return window.localStorage.getItem(GOAL_KEY) === null ? undefined : readGoal();
+  } catch {
+    return undefined;
+  }
 }
 
 /** Consecutive days with activity, counting back from today (or yesterday). */

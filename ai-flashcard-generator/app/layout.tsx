@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
+import { AuthProvider } from "@/components/AuthProvider";
+import ConsentGate from "@/components/ConsentGate";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import Pet from "@/components/Pet";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -49,14 +52,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="flex min-h-full flex-col">
-        <a href="#main" className="skip-link">
-          Skip to content
-        </a>
-        <Header />
-        <main id="main" className="flex-1">
-          {children}
-        </main>
-        <Footer />
+        <AuthProvider>
+          <a href="#main" className="skip-link">
+            Skip to content
+          </a>
+          <Header />
+          <main id="main" className="flex-1">
+            {children}
+          </main>
+          <Footer />
+          <Pet />
+          <ConsentGate />
+        </AuthProvider>
       </body>
     </html>
   );

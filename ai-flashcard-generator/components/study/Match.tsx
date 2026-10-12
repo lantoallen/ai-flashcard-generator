@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Confetti from '@/components/Confetti';
 import { Icon } from '@/components/icons';
 import { logActivity } from '@/lib/activity';
+import { petReact } from '@/lib/pet';
 import { touchProgress } from '@/lib/storage';
 import { formatMs, shuffle } from '@/lib/utils';
 import { NeedMore, Segmented, type ModeProps } from './shared';
@@ -91,6 +92,7 @@ export default function Match({ setId, cards, bestMatchMs, goTo }: ModeProps) {
         const improved = comparable && (bestMatchMs === undefined || elapsed < bestMatchMs);
         touchProgress(setId, { bestMatchMs: improved ? elapsed : bestMatchMs });
         logActivity(run.pairs);
+        petReact('party', 'Board cleared!');
         setNewBest(improved && bestMatchMs !== undefined);
         setNow(finishedAt);
         setRun({ ...run, matched, selected: null, finishedAt });

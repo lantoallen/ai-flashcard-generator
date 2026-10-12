@@ -5,20 +5,19 @@ import {
   aiConfigured,
   aiFailure,
   clientIp,
-  groqModel,
   jsonError,
-  MODELS,
   NOT_CONFIGURED,
   rateLimited,
+  withFallback,
 } from '@/lib/server';
 
 // Allow AI calls to run longer than a host's default function timeout.
-export const maxDuration = 30;
+export const maxDuration = 45;
 
 const MAX_NOTES = 8000;
 const MAX_TOPIC = 200;
 const MIN_COUNT = 1;
-const MAX_COUNT = 20;
+const MAX_COUNT = 25;
 const LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
 
 const setSchema = z.object({
@@ -61,7 +60,7 @@ export async function POST(req: Request) {
         .filter((t): t is string => typeof t === 'string')
         .map((t) => t.trim().slice(0, 100))
         .filter(Boolean)
-        .slice(0, 100)
+        .slice(0, 300)
     : [];
 
   if (!notes && !topic) {
@@ -92,17 +91,21 @@ export async function POST(req: Request) {
     ? `${rules}\n\nUse only information from these notes:\n"""\n${notes}\n"""`
     : `${rules}\n\nTopic: "${topic}". Cover the most important concepts a student should know.`;
 
-  let lastError: unknown;
-  for (const model of MODELS) {
-    try {
+  try {
+    const exclusions = new Set(exclude.map((t) => t.toLowerCase()));
+    const minimum = exclude.length ? 1 : Math.min(3, count);
+
+    // Tries each configured provider in turn; a result with too few usable
+    // cards counts as a failure so the next provider gets a chance.
+    const { value } = await withFallback(async (model) => {
       const { object } = await generateObject({
-        model: groqModel(model),
+        model,
         schema: setSchema,
         prompt,
         providerOptions: AI_OPTIONS,
       });
 
-      const seen = new Set(exclude.map((t) => t.toLowerCase()));
+      const seen = new Set(exclusions);
       const cards = object.cards
         .map((c) => ({
           term: c.term.trim(),
@@ -119,21 +122,15 @@ export async function POST(req: Request) {
           return true;
         });
 
-      if (cards.length < (exclude.length ? 1 : Math.min(3, count))) {
-        lastError = new Error('Too few valid cards');
-        continue;
-      }
+      if (cards.length < minimum) throw new Error('Too few valid cards');
+      return { title: object.title.trim(), cards };
+    });
 
-      return Response.json({
-        title: object.title.trim() || topic || 'Untitled set',
-        cards,
-      });
-    } catch (err) {
-      lastError = err;
-      console.error(`Generation failed with ${model}:`, err);
-    }
+    return Response.json({
+      title: value.title || topic || 'Untitled set',
+      cards: value.cards,
+    });
+  } catch (err) {
+    return aiFailure(err);
   }
-
-  console.error('All models failed:', lastError);
-  return aiFailure(lastError);
 }

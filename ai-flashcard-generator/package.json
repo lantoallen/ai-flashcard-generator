@@ -6,10 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:merge": "node --experimental-strip-types --no-warnings scripts/test-merge.mts"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.93",
     "@ai-sdk/groq": "^4.0.46",
+    "@ai-sdk/openai-compatible": "^3.0.67",
+    "@supabase/supabase-js": "^2.117.3",
     "ai": "^7.0.109",
     "next": "16.3.5",
     "react": "19.2.8",

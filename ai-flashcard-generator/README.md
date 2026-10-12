@@ -5,9 +5,18 @@ different ways. Free to run, no accounts, no database.
 
 ## Features
 
+- **Build cards by hand**: a Quizlet-style builder with title, description and
+  term/definition rows. No card limit (the editor renders large sets in pages),
+  Tab adds the next card, paste many at once, autosaved draft.
 - **AI generation** from pasted notes (up to 8,000 characters) or a topic, with
-  any card count from 3 to 50 (large sets are generated in batches) and a
-  difficulty level.
+  any card count from 3 to 200 (generated in batches) and a difficulty level.
+- **Automatic AI failover**: configure more than one provider and requests
+  quietly switch to a backup if one is busy, rate-limited or down.
+- **Study buddy**: a mascot that reacts to your answers and levels up as you
+  study (rename it, or hide it).
+- **Optional accounts** (Supabase): sign in to sync sets, progress and streaks
+  across devices, with explicit agreement to the Terms and Privacy Policy.
+- **Terms and cookie notice** on first visit, plus full Terms and Privacy pages.
 - **Six study modes**
   - *Flashcards*: flip, shuffle, star, “Got it / Still learning”, read aloud,
     keyboard shortcuts, and an **AI “Explain”** button for any card.
@@ -58,7 +67,11 @@ Open <http://localhost:3000>.
 
 | Piece | Where |
 | --- | --- |
-| Generation and explain endpoints (validation, rate limit, model fallback) | `app/api/generate/route.ts`, `app/api/explain/route.ts` |
+| AI providers, failover, rate limit | `lib/server.ts` |
+| Generation, explain, health, account-delete endpoints | `app/api/*/route.ts` |
+| Accounts, sync and merge | `components/AuthProvider.tsx`, `lib/cloud.ts`, `lib/merge.ts`, `supabase/schema.sql` |
+| Consent (terms + storage notice) | `lib/consent.ts`, `components/ConsentGate.tsx`, `app/terms`, `app/privacy` |
+| Study buddy | `components/Pet.tsx`, `components/PetFigure.tsx`, `lib/pet.ts` |
 | Pages: landing, create, library, study, about | `app/` |
 | Study modes | `components/study/` |
 | Local persistence (`useSyncExternalStore` over localStorage) | `lib/storage.ts`, `lib/activity.ts` |
@@ -66,14 +79,55 @@ Open <http://localhost:3000>.
 | Theme and accent colors | `lib/theme.ts`, `app/globals.css` |
 | Quiz building and typed-answer checking | `lib/quiz.ts`, `lib/utils.ts` |
 
-Models are tried in order (`openai/gpt-oss-120b`, then `openai/gpt-oss-20b`).
-Groq retires models occasionally. If generation starts failing with
-“model does not exist”, update the `MODELS` list in `lib/server.ts`.
+## AI providers and failover
+
+Set a key for any of these (all have free tiers). Providers with a key are
+tried in this order, and a failure moves on to the next automatically:
+
+| Provider | Variable | Default models |
+| --- | --- | --- |
+| Groq | `GROQ_API_KEY` | `openai/gpt-oss-120b`, `openai/gpt-oss-20b` |
+| Cerebras | `CEREBRAS_API_KEY` | `gpt-oss-120b`, `llama3.1-8b` |
+| Google Gemini | `GEMINI_API_KEY` | `gemini-2.5-flash`, `gemini-2.5-flash-lite` |
+| OpenRouter | `OPENROUTER_API_KEY` | `openai/gpt-oss-20b:free`, `meta-llama/llama-3.3-70b-instruct:free` |
+
+Override the order with `AI_PROVIDER_ORDER=gemini,groq` or a provider's models
+with e.g. `GROQ_MODELS=model-a,model-b`. Providers retire models from time to
+time, so use `/api/health` to see what is available.
+
+## Accounts (optional)
+
+Accounts need a free [Supabase](https://supabase.com) project:
+
+1. Create a project, then open **SQL Editor** and run `supabase/schema.sql`.
+2. In **Authentication → Providers**, keep Email enabled. For easiest testing
+   you can switch off "Confirm email".
+3. In **Authentication → URL Configuration**, add your site URL (and
+   `http://localhost:3000` for development) to the allowed redirect URLs.
+4. Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (from
+   **Project Settings → API**) in `.env.local` and in your hosting settings.
+5. Optional: set `SUPABASE_SERVICE_ROLE_KEY` (server only) to enable the
+   "Delete my account" button. Without it users can still delete their cloud
+   data.
+
+Without these variables the account UI explains that accounts are off and the
+app works exactly as before. Sets sync as one JSON row per user, protected by
+row-level security, and merge by last-modified time with deletion tracking so
+nothing is lost between devices (`npm run test:merge` covers the merge rules).
+
+## Legal text
+
+`app/terms` and `app/privacy` describe how this app works in plain language.
+They are a starting point, not legal advice. Review them (and update the
+contact details) before running your own public copy, and bump
+`TERMS_VERSION` in `lib/terms.ts` when you change them so users are asked to
+accept again.
 
 ## Checking a deployment
 
-`GET /api/health` reports whether `GROQ_API_KEY` is set, whether Groq accepts
-it, and which configured models are available. It never returns the key.
+`GET /api/health` reports, for each AI provider, whether a key is set, whether
+the provider accepts it, and which configured models are available. It never
+returns a key.
 
 ## Deploying
 
@@ -83,6 +137,7 @@ instance.
 
 ## Privacy
 
-Sets, progress and streaks never leave the browser. Only the text you submit
-for generation or explanation is sent to Groq. Share links carry the set in
-the URL hash, which browsers don't send to servers.
+Without an account, sets, progress and streaks never leave the browser. Only
+the text you submit for generation or explanation is sent to an AI provider.
+With an account, your library is also stored in your Supabase project. Share
+links carry the set in the URL hash, which browsers don't send to servers.

@@ -284,7 +284,27 @@ h1, h2, h3 {
   animation: confetti-fall 3s ease-in forwards;
 }
 
+@keyframes pet-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.pet-bob { animation: pet-bob 2.8s ease-in-out infinite; }
+
+@keyframes pet-hop {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  30% { transform: translateY(-14px) rotate(-5deg); }
+  60% { transform: translateY(-4px) rotate(4deg); }
+}
+.pet-hop { animation: pet-hop 0.7s ease-in-out infinite; }
+
+@keyframes pet-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  96% { transform: scaleY(0.1); }
+}
+.pet-blink { animation: pet-blink 4.5s infinite; }
+
 @media (prefers-reduced-motion: reduce) {
+  .pet-bob, .pet-hop, .pet-blink { animation: none; }
   .flip-card { transition: none; }
   .shake, .float, .marquee-track, .pop { animation: none; }
   .confetti { display: none; }

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Confetti from '@/components/Confetti';
 import { Icon } from '@/components/icons';
 import { logActivity } from '@/lib/activity';
+import { petReact } from '@/lib/pet';
 import { buildQuiz, type Direction, type QuizQuestion } from '@/lib/quiz';
 import { touchProgress } from '@/lib/storage';
 import {
@@ -49,7 +50,10 @@ export default function Quiz({ setId, cards, bestQuiz, goTo }: ModeProps) {
   }
 
   function pick(option: string) {
-    if (run && run.picked === null) logActivity(1);
+    if (run && run.picked === null) {
+      logActivity(1);
+      petReact(option === run.questions[run.idx].answer ? 'cheer' : 'oops');
+    }
     setRun((r) =>
       r && r.picked === null
         ? { ...r, picked: option, answers: [...r.answers, option] }

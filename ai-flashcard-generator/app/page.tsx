@@ -1,6 +1,7 @@
 import Link from "next/link";
 import DemoButton from "@/components/DemoButton";
 import { Icon, type IconName } from "@/components/icons";
+import PetFigure from "@/components/PetFigure";
 
 const TOPICS = [
   "Biology", "Spanish verbs", "World War II", "Calculus", "Organic chemistry",
@@ -73,12 +74,14 @@ const MODES: { icon: IconName; title: string; body: string; tint: string; tilt: 
 
 const FEATURES: { icon: IconName; title: string; body: string }[] = [
   { icon: "flame", title: "Streaks & daily goal", body: "Study a little every day and watch your streak and 7-day chart grow." },
-  { icon: "link", title: "Share with a link", body: "Send a set to a friend. The cards travel in the link itself, so there’s no upload." },
+  { icon: "heart", title: "A study buddy", body: "Pip cheers you on, reacts to your answers and levels up as you learn." },
   { icon: "sparkles", title: "AI explain & add more", body: "Ask for a plain-English explanation, or have the AI add more cards to a set." },
+  { icon: "plus", title: "Unlimited manual cards", body: "Type your own terms and definitions with no cap. Or ask the AI for up to 200 at once." },
+  { icon: "lock", title: "Optional account", body: "Sign in to sync your library across devices. Or skip it. Everything works without." },
+  { icon: "link", title: "Share with a link", body: "Send a set to a friend. The cards travel in the link itself, so there’s no upload." },
   { icon: "palette", title: "Make it yours", body: "Light or dark, plus five accent colors. Your pick is remembered." },
   { icon: "download", title: "Import, export, print", body: "Upload a CSV, export to Anki or Quizlet, or print your cards as a study sheet." },
-  { icon: "edit", title: "Any number of cards", body: "Ask for 3 cards or 50. Big sets are built in steps so they stay reliable." },
-  { icon: "lock", title: "Private by default", body: "No sign-up. Sets live in your browser, not on our servers." },
+  { icon: "zap", title: "Always-on AI", body: "If one AI provider is busy or down, Flashly quietly switches to a backup." },
 ];
 
 const FAQ = [
@@ -88,7 +91,7 @@ const FAQ = [
   },
   {
     q: "Where are my sets stored?",
-    a: "In your own browser (local storage). Clearing site data removes them, so use Backup or a share link to keep a copy.",
+    a: "In your own browser by default. If you create an account they also sync to it, so they follow you to other devices. Without an account, clearing site data removes them, so use Backup or a share link to keep a copy.",
   },
   {
     q: "Can I trust the AI’s answers?",
@@ -145,11 +148,12 @@ function HeroVisual() {
         <span className="font-display text-lg font-extrabold">7-day streak</span>
       </div>
 
-      <span className="pop absolute -right-1 bottom-10 flex h-16 w-16 rotate-12 items-center justify-center rounded-full border-2 border-ink bg-mint text-center text-[11px] font-extrabold leading-tight text-[#1b1033] shadow-[3px_3px_0_var(--shadow-color)]">
-        100%
-        <br />
-        free
-      </span>
+      <div className="absolute -right-2 -top-2 flex flex-col items-end">
+        <span className="pop mr-6 rounded-2xl border-2 border-ink bg-surface px-3 py-1.5 text-sm font-extrabold shadow-[3px_3px_0_var(--shadow-color)]">
+          Let’s study!
+        </span>
+        <PetFigure mood="excited" level={3} size={110} />
+      </div>
     </div>
   );
 }

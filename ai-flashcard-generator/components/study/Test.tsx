@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Confetti from '@/components/Confetti';
 import { Icon } from '@/components/icons';
 import { logActivity } from '@/lib/activity';
+import { petReact } from '@/lib/pet';
 import { buildQuestion } from '@/lib/quiz';
 import { touchProgress } from '@/lib/storage';
 import type { Card } from '@/lib/types';
@@ -159,6 +160,7 @@ export default function Test({ setId, cards, goTo }: ModeProps) {
     function submit() {
       if (!run) return;
       logActivity(answered || 1);
+      petReact('party', 'Test submitted. Nice work!');
       touchProgress(setId, {});
       setRun({ ...run, submitted: true });
     }

@@ -24,6 +24,8 @@ export type StudySet = {
   createdAt: number;
   updatedAt: number;
   lastStudied?: number;
+  /** Last time anything in this set changed (used when syncing between devices). */
+  modifiedAt?: number;
   /** Best quiz score, 0-100. */
   bestQuiz?: number;
   /** Best match-game time in ms. */

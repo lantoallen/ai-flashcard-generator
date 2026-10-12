@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useAuth } from './AuthProvider';
 import { Icon, type IconName } from './icons';
 import { Logo } from './Logo';
 import ThemeMenu from './ThemeMenu';
@@ -30,6 +31,7 @@ export default function Header() {
   const [openOn, setOpenOn] = useState<string | null>(null);
   const open = openOn === pathname;
   const streak = streakOf(useActivity(), nowMs());
+  const auth = useAuth();
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -79,6 +81,22 @@ export default function Header() {
             </Link>
           )}
           <ThemeMenu />
+          {auth.enabled && auth.status !== 'loading' && (
+            <Link
+              href="/account"
+              className={
+                auth.status === 'signedIn'
+                  ? 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-sun text-base font-extrabold text-[#1b1033] shadow-[2px_2px_0_var(--shadow-color)]'
+                  : 'btn btn-secondary !py-2'
+              }
+              aria-label={auth.status === 'signedIn' ? `Account: ${auth.user?.name}` : 'Sign in'}
+              title={auth.status === 'signedIn' ? auth.user?.email : 'Sign in'}
+            >
+              {auth.status === 'signedIn'
+                ? (auth.user?.name?.[0] ?? '?').toUpperCase()
+                : 'Sign in'}
+            </Link>
+          )}
           <Link href="/create" className="btn btn-primary hidden sm:inline-flex">
             <Icon name="sparkles" size={16} />
             New set

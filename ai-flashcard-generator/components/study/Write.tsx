@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Icon } from '@/components/icons';
 import { logActivity } from '@/lib/activity';
+import { petReact } from '@/lib/pet';
 import type { Side } from '@/lib/quiz';
 import { touchProgress } from '@/lib/storage';
 import type { Card } from '@/lib/types';
@@ -71,6 +72,7 @@ export default function Write({ setId, cards, goTo }: ModeProps) {
     if (run.feedback === null) {
       const result = checkTyped(run.input, answer);
       logActivity(1);
+      petReact(result === 'wrong' ? 'oops' : 'cheer');
       setRun({
         ...run,
         feedback: result,

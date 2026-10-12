@@ -3,17 +3,21 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from './icons';
+import ManualBuilder from './ManualBuilder';
+import { ensureTerms } from '@/lib/consent';
+import { petReact } from '@/lib/pet';
 import { saveSet } from '@/lib/storage';
 import type { SetSource, StudySet } from '@/lib/types';
 import { parseCards, uid } from '@/lib/utils';
 
-type Tab = 'notes' | 'topic' | 'import';
+type Tab = 'notes' | 'topic' | 'manual' | 'import';
 type Level = 'beginner' | 'intermediate' | 'advanced';
 type NewCard = { term: string; definition: string; distractors?: string[] };
 
-const TABS: { id: Tab; label: string; icon: 'edit' | 'search' | 'upload' }[] = [
+const TABS: { id: Tab; label: string; icon: 'edit' | 'search' | 'upload' | 'plus' }[] = [
   { id: 'notes', label: 'Paste notes', icon: 'edit' },
   { id: 'topic', label: 'Enter a topic', icon: 'search' },
+  { id: 'manual', label: 'Type your own', icon: 'plus' },
   { id: 'import', label: 'Import list', icon: 'upload' },
 ];
 
@@ -32,9 +36,9 @@ const IDEAS = [
   'Basic Spanish verbs',
 ];
 
-const PRESETS = [5, 10, 15, 20, 30, 50];
+const PRESETS = [5, 10, 20, 30, 50, 100, 200];
 const MIN_CARDS = 3;
-const MAX_CARDS = 50;
+const MAX_CARDS = 200;
 const BATCH = 10; // cards per AI request; bigger sets are generated in several requests
 const MAX_RETRIES = 3;
 const MAX_NOTES = 8000;
@@ -101,7 +105,11 @@ export default function CreateForm() {
       return;
     }
 
+    // The text is about to be sent to an AI provider: make sure terms are accepted.
+    if (!ensureTerms()) return;
+
     setLoading(true);
+    petReact('think');
     setProgress(0);
     const controller = new AbortController();
     abortRef.current = controller;
@@ -119,7 +127,7 @@ export default function CreateForm() {
           ...(tab === 'notes' ? { notes } : { topic }),
           count: size,
           level,
-          exclude: all.map((c) => c.term),
+          exclude: all.slice(-150).map((c) => c.term),
         });
 
         let res: Response;
@@ -157,12 +165,20 @@ export default function CreateForm() {
           return;
         }
 
-        const fresh = data.cards ?? [];
+        // Drop anything we already have (case-insensitive), then cap at the request.
+        const have = new Set(all.map((c) => c.term.trim().toLowerCase()));
+        const fresh = (data.cards ?? []).filter((c) => {
+          const key = c.term.trim().toLowerCase();
+          if (!key || have.has(key)) return false;
+          have.add(key);
+          return true;
+        });
         all = [...all, ...fresh].slice(0, count);
         if (!title) title = data.title ?? '';
         setProgress(all.length);
         if (fresh.length === 0) break; // nothing new to add, so stop asking
       }
+      petReact('party', `${all.length} cards ready!`);
       finish(title || topic || 'Untitled set', tab, all);
     } catch (err) {
       if ((err as Error).name === 'AbortError') {
@@ -202,11 +218,11 @@ export default function CreateForm() {
   }
 
   return (
-    <form onSubmit={submit} className="panel flex flex-col gap-6 p-5 sm:p-7">
+    <div className="panel flex flex-col gap-6 p-5 sm:p-7">
       <div
         role="tablist"
         aria-label="How do you want to start?"
-        className="grid grid-cols-3 gap-1 rounded-xl border-2 border-ink bg-surface-2 p-1"
+        className="grid grid-cols-2 gap-1 rounded-xl border-2 border-ink bg-surface-2 p-1 sm:grid-cols-4"
       >
         {TABS.map((t) => (
           <button
@@ -224,12 +240,15 @@ export default function CreateForm() {
             }`}
           >
             <Icon name={t.icon} size={16} />
-            <span className="max-sm:hidden">{t.label}</span>
-            <span className="sm:hidden">{t.label.split(' ')[0]}</span>
+            {t.label}
           </button>
         ))}
       </div>
 
+      {tab === 'manual' ? (
+        <ManualBuilder />
+      ) : (
+      <form onSubmit={submit} className="flex flex-col gap-6">
       {tab === 'notes' && (
         <div className="flex flex-col gap-2">
           <label htmlFor="notes" className="font-bold">
@@ -389,9 +408,11 @@ export default function CreateForm() {
             </div>
             <p className={`text-xs ${countValid ? 'text-muted' : 'font-bold text-danger'}`}>
               {countValid
-                ? count > BATCH
-                  ? 'Larger sets are generated in several steps, so they take a little longer.'
-                  : `Pick any number from ${MIN_CARDS} to ${MAX_CARDS}.`
+                ? count > 100
+                  ? 'Very large sets are built in many steps and can take a few minutes. You can cancel and keep what is ready.'
+                  : count > BATCH
+                    ? 'Larger sets are generated in several steps, so they take a little longer.'
+                    : `Pick any number from ${MIN_CARDS} to ${MAX_CARDS}.`
                 : `Enter a whole number from ${MIN_CARDS} to ${MAX_CARDS}.`}
             </p>
           </div>
@@ -497,6 +518,8 @@ export default function CreateForm() {
           </button>
         )}
       </div>
-    </form>
+      </form>
+      )}
+    </div>
   );
 }

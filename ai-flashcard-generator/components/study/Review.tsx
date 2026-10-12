@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Confetti from '@/components/Confetti';
 import { Icon } from '@/components/icons';
 import { logActivity } from '@/lib/activity';
+import { petReact } from '@/lib/pet';
 import {
   formatIn,
   gradeCard,
@@ -64,6 +65,8 @@ export default function Review({ setId, cards, goTo }: ModeProps) {
     if (!run || run.done || !current) return;
     updateCard(setId, current.id, gradeCard(current, g, nowMs()));
     logActivity(1);
+    if (g === 'again') petReact('oops', 'It’ll come back soon. You’ll get it!');
+    else petReact('cheer');
 
     // Forgotten cards come back at the end of this session.
     const queue = g === 'again' ? [...run.queue, current.id] : run.queue;
