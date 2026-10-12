@@ -2,6 +2,9 @@ import { groq } from '@ai-sdk/groq';
 import { generateText } from 'ai';
 import { clientIp, jsonError, MODELS, rateLimited } from '@/lib/server';
 
+// Allow AI calls to run longer than a host's default function timeout.
+export const maxDuration = 30;
+
 const clip = (v: unknown, max: number) =>
   typeof v === 'string' ? v.trim().slice(0, max) : '';
 

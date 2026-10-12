@@ -3,6 +3,9 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 import { clientIp, jsonError, MODELS, rateLimited } from '@/lib/server';
 
+// Allow AI calls to run longer than a host's default function timeout.
+export const maxDuration = 30;
+
 const MAX_NOTES = 8000;
 const MAX_TOPIC = 200;
 const MIN_COUNT = 5;
