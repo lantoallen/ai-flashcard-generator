@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Flashly – AI flashcards & quizzes
 
-## Getting Started
+Turn pasted notes or any topic into flashcards and quizzes, then study them four
+different ways. Free to run, no accounts, no database.
 
-First, run the development server:
+## Features
+
+- **AI generation** from pasted notes (up to 8,000 characters) or a topic, with
+  adjustable card count (5–20) and difficulty.
+- **Flashcards**: flip, shuffle, star, “Got it / Still learning”, read aloud,
+  keyboard shortcuts, filter by starred or unmastered cards.
+- **Quiz**: multiple choice using AI-written distractors, review of every miss,
+  retry only the missed questions, best score tracking.
+- **Write**: type answers from memory; typos and punctuation are forgiven.
+- **Match**: timed pairing game with best-time tracking.
+- **Library**: sets are stored in the browser (localStorage), with search, sort,
+  and JSON backup/restore.
+- **Edit** any card, add your own, or **import** a list (tab / comma / “ - ”
+  separated).
+- **Export** to CSV, JSON or plain text (paste into Quizlet, Anki, Sheets).
+- Dark mode, responsive layout, built-in demo set that works without the AI.
+
+## Getting started
+
+```bash
+npm install
+```
+
+Create `.env.local` with a free API key from [console.groq.com](https://console.groq.com):
+
+```
+GROQ_API_KEY=your_key_here
+```
+
+Then run:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How it works
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Piece | Where |
+| --- | --- |
+| Generation endpoint (validation, rate limit, model fallback) | `app/api/generate/route.ts` |
+| Pages: landing, create, library, study, about | `app/` |
+| Study modes | `components/study/` |
+| Local persistence (`useSyncExternalStore` over localStorage) | `lib/storage.ts` |
+| Quiz building and typed-answer checking | `lib/quiz.ts`, `lib/utils.ts` |
 
-## Learn More
+Models are tried in order (`openai/gpt-oss-120b`, then `openai/gpt-oss-20b`).
+Groq retires models occasionally. If generation starts failing with
+“model does not exist”, update the `MODELS` list in the route.
 
-To learn more about Next.js, take a look at the following resources:
+## Deploying
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Works on any Next.js host. On Vercel's free Hobby plan, add `GROQ_API_KEY` as an
+environment variable. Note that the in-memory rate limiter is per server
+instance.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Privacy
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Sets and progress never leave the browser. Only the text you submit for
+generation is sent to Groq.

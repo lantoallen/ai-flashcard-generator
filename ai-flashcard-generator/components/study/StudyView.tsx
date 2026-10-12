@@ -1,0 +1,237 @@
+'use client';
+
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
+import { useMemo, useRef, useState } from 'react';
+import { Icon, type IconName } from '@/components/icons';
+import { download, safeFileName, toCsv, toText } from '@/lib/export';
+import { deleteSet, useHydrated, useSet } from '@/lib/storage';
+import { SOURCE_LABEL } from '@/lib/types';
+import { validCards } from '@/lib/utils';
+import CardsEditor from './CardsEditor';
+import Flashcards from './Flashcards';
+import Match from './Match';
+import Quiz from './Quiz';
+import { ProgressBar, type Tab } from './shared';
+import Write from './Write';
+
+const TABS: { id: Tab; label: string; icon: IconName }[] = [
+  { id: 'flashcards', label: 'Flashcards', icon: 'layers' },
+  { id: 'quiz', label: 'Quiz', icon: 'quiz' },
+  { id: 'write', label: 'Write', icon: 'type' },
+  { id: 'match', label: 'Match', icon: 'grid' },
+  { id: 'cards', label: 'Edit cards', icon: 'edit' },
+];
+
+export default function StudyView() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const hydrated = useHydrated();
+  const set = useSet(id);
+  const [tab, setTab] = useState<Tab | null>(null);
+  const [copied, setCopied] = useState(false);
+  const menuRef = useRef<HTMLDetailsElement>(null);
+
+  const cards = useMemo(() => (set ? validCards(set.cards) : []), [set]);
+
+  if (!hydrated) {
+    return (
+      <div className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6" aria-busy="true">
+        <div className="h-9 w-64 animate-pulse rounded-lg bg-surface-2" />
+        <div className="mt-8 h-80 animate-pulse rounded-2xl bg-surface-2" />
+      </div>
+    );
+  }
+
+  if (!set) {
+    return (
+      <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-4 px-4 py-24 text-center">
+        <h1 className="text-2xl font-semibold">Set not found</h1>
+        <p className="text-muted">
+          It may have been deleted, or it was created in a different browser.
+        </p>
+        <div className="flex gap-3">
+          <Link href="/library" className="btn btn-primary">
+            My library
+          </Link>
+          <Link href="/create" className="btn btn-secondary">
+            Create a set
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const active: Tab = tab ?? (cards.length === 0 ? 'cards' : 'flashcards');
+  const known = cards.filter((c) => c.known).length;
+
+  const modeProps = {
+    setId: set.id,
+    cards,
+    bestQuiz: set.bestQuiz,
+    bestMatchMs: set.bestMatchMs,
+    goTo: setTab,
+  };
+
+  function closeMenu() {
+    menuRef.current?.removeAttribute('open');
+  }
+
+  async function copyText() {
+    if (!set) return;
+    try {
+      await navigator.clipboard.writeText(toText(set));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard blocked */
+    }
+    closeMenu();
+  }
+
+  function remove() {
+    if (set && window.confirm(`Delete “${set.title}”? This can’t be undone.`)) {
+      deleteSet(set.id);
+      router.push('/library');
+    }
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
+      <Link
+        href="/library"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-fg"
+      >
+        <Icon name="left" size={16} />
+        My library
+      </Link>
+
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="break-words text-2xl font-bold tracking-tight sm:text-3xl">
+            {set.title || 'Untitled set'}
+          </h1>
+          {set.description && <p className="mt-1 text-muted">{set.description}</p>}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="chip">{cards.length} cards</span>
+            <span className="chip">{SOURCE_LABEL[set.source]}</span>
+            {set.bestQuiz !== undefined && (
+              <span className="chip">Best quiz {set.bestQuiz}%</span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <details ref={menuRef} className="relative">
+            <summary className="btn btn-secondary list-none">
+              <Icon name="download" size={16} />
+              Export
+              <Icon name="chevron" size={14} />
+            </summary>
+            <div className="panel absolute right-0 z-20 mt-2 flex w-56 flex-col p-1.5 shadow-lg">
+              <button
+                type="button"
+                className="btn btn-ghost !justify-start"
+                onClick={() => {
+                  download(`${safeFileName(set.title)}.csv`, toCsv(set), 'text/csv');
+                  closeMenu();
+                }}
+              >
+                Download CSV
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost !justify-start"
+                onClick={() => {
+                  download(
+                    `${safeFileName(set.title)}.json`,
+                    JSON.stringify([set], null, 2),
+                    'application/json'
+                  );
+                  closeMenu();
+                }}
+              >
+                Download backup (JSON)
+              </button>
+              <button type="button" className="btn btn-ghost !justify-start" onClick={copyText}>
+                <Icon name="copy" size={16} />
+                Copy as text
+              </button>
+            </div>
+          </details>
+          <button
+            type="button"
+            onClick={remove}
+            className="btn btn-danger !p-2.5"
+            aria-label="Delete set"
+          >
+            <Icon name="trash" />
+          </button>
+        </div>
+      </div>
+      {copied && (
+        <p role="status" className="mt-3 text-sm font-medium text-success">
+          Copied to clipboard. Paste into Quizlet, Anki or Sheets.
+        </p>
+      )}
+
+      {cards.length > 0 && (
+        <div className="mt-6 flex items-center gap-3 text-sm text-muted">
+          <ProgressBar value={known} max={cards.length} />
+          <span className="shrink-0 tabular-nums">
+            {known}/{cards.length} mastered
+          </span>
+        </div>
+      )}
+
+      <div
+        role="tablist"
+        aria-label="Study mode"
+        className="-mx-1 mt-6 flex gap-1 overflow-x-auto rounded-2xl bg-surface-2 p-1"
+      >
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={active === t.id}
+            onClick={() => setTab(t.id)}
+            className={`flex shrink-0 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+              active === t.id
+                ? 'bg-surface text-fg shadow-sm'
+                : 'text-muted hover:text-fg'
+            }`}
+          >
+            <Icon name={t.icon} size={16} />
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div role="tabpanel" className="mt-6">
+        {active === 'flashcards' &&
+          (cards.length > 0 ? (
+            <Flashcards {...modeProps} />
+          ) : (
+            <EmptyCards onEdit={() => setTab('cards')} />
+          ))}
+        {active === 'quiz' && <Quiz {...modeProps} />}
+        {active === 'write' && <Write {...modeProps} />}
+        {active === 'match' && <Match {...modeProps} />}
+        {active === 'cards' && <CardsEditor set={set} />}
+      </div>
+    </div>
+  );
+}
+
+function EmptyCards({ onEdit }: { onEdit: () => void }) {
+  return (
+    <div className="panel flex flex-col items-center gap-3 px-6 py-12 text-center">
+      <p className="text-lg font-semibold">This set has no complete cards yet</p>
+      <button type="button" onClick={onEdit} className="btn btn-primary">
+        <Icon name="edit" size={16} />
+        Edit cards
+      </button>
+    </div>
+  );
+}

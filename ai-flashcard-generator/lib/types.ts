@@ -1,0 +1,35 @@
+export type Card = {
+  id: string;
+  term: string;
+  definition: string;
+  /** Plausible wrong answers (for definitions) used by the quiz. */
+  distractors?: string[];
+  starred?: boolean;
+  /** "Got it" in flashcard mode. */
+  known?: boolean;
+};
+
+export type SetSource = 'notes' | 'topic' | 'import' | 'manual' | 'demo';
+
+export type StudySet = {
+  id: string;
+  title: string;
+  description?: string;
+  cards: Card[];
+  source: SetSource;
+  createdAt: number;
+  updatedAt: number;
+  lastStudied?: number;
+  /** Best quiz score, 0-100. */
+  bestQuiz?: number;
+  /** Best match-game time in ms. */
+  bestMatchMs?: number;
+};
+
+export const SOURCE_LABEL: Record<SetSource, string> = {
+  notes: 'From notes',
+  topic: 'From topic',
+  import: 'Imported',
+  manual: 'Manual',
+  demo: 'Demo',
+};
