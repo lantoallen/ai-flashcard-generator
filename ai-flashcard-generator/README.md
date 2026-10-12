@@ -12,8 +12,18 @@ different ways. Free to run, no accounts, no database.
   any card count from 3 to 200 (generated in batches) and a difficulty level.
 - **Automatic AI failover**: configure more than one provider and requests
   quietly switch to a backup if one is busy, rate-limited or down.
-- **Study buddy**: a mascot that reacts to your answers and levels up as you
-  study (rename it, or hide it).
+- **Study buddy**: a mascot that reacts to your answers, levels up as you
+  study, and **chats** with you (quiz me, explain it, plan my week). Rename it
+  or hide it.
+- **Community** (needs accounts): publish sets publicly or privately, browse and
+  search others' sets, like them and save a copy to your library.
+- **Profiles**: photo, username, bio, interests and a private birthday, plus
+  privacy controls (who can message you, hide from discovery, block people).
+- **People and messages**: find learners by shared interests and chat with them.
+  Includes reporting, blocking, rate limits and automatic hiding of sets that
+  several members report.
+- **Colors**: 12 accent colors plus a custom picker, light/dark mode; your
+  choice follows your account.
 - **Optional accounts** (Supabase): sign in to sync sets, progress and streaks
   across devices, with explicit agreement to the Terms and Privacy Policy.
 - **Terms and cookie notice** on first visit, plus full Terms and Privacy pages.
@@ -71,7 +81,8 @@ Open <http://localhost:3000>.
 | Generation, explain, health, account-delete endpoints | `app/api/*/route.ts` |
 | Accounts, sync and merge | `components/AuthProvider.tsx`, `lib/cloud.ts`, `lib/merge.ts`, `supabase/schema.sql` |
 | Consent (terms + storage notice) | `lib/consent.ts`, `components/ConsentGate.tsx`, `app/terms`, `app/privacy` |
-| Study buddy | `components/Pet.tsx`, `components/PetFigure.tsx`, `lib/pet.ts` |
+| Study buddy and its chat | `components/Pet.tsx`, `components/PetChat.tsx`, `app/api/pip/route.ts`, `lib/pet.ts` |
+| Community, profiles, messages | `supabase/community.sql`, `lib/community.ts`, `components/Community*.tsx`, `ProfileEditor.tsx`, `Messenger.tsx` |
 | Pages: landing, create, library, study, about | `app/` |
 | Study modes | `components/study/` |
 | Local persistence (`useSyncExternalStore` over localStorage) | `lib/storage.ts`, `lib/activity.ts` |
@@ -99,7 +110,9 @@ time, so use `/api/health` to see what is available.
 
 Accounts need a free [Supabase](https://supabase.com) project:
 
-1. Create a project, then open **SQL Editor** and run `supabase/schema.sql`.
+1. Create a project, then open **SQL Editor** and run `supabase/schema.sql`,
+   then `supabase/community.sql` (profiles, posts, messages and their
+   security rules). Both can be re-run safely.
 2. In **Authentication → Providers**, keep Email enabled. For easiest testing
    you can switch off "Confirm email".
 3. In **Authentication → URL Configuration**, add your site URL (and
@@ -114,6 +127,41 @@ Without these variables the account UI explains that accounts are off and the
 app works exactly as before. Sets sync as one JSON row per user, protected by
 row-level security, and merge by last-modified time with deletion tracking so
 nothing is lost between devices (`npm run test:merge` covers the merge rules).
+
+## Community
+
+The community uses the same Supabase project as accounts. After running
+`supabase/community.sql`:
+
+- Profiles are created automatically for new accounts (and backfilled for
+  existing ones). Pictures are resized in the browser to a small square and
+  stored with the profile, so no file storage is needed.
+- Moderation: members can report sets and people. Reports land in the
+  `reports` table (Supabase **Table Editor**). A set reported by three
+  different members is hidden automatically. To remove a person or a set,
+  delete the row in the dashboard.
+- Realtime message delivery uses Supabase Realtime (enabled by the SQL). The
+  app also polls every few seconds, so chat works even without it.
+
+### Try it without Supabase (development only)
+
+```bash
+NEXT_PUBLIC_MOCK_BACKEND=1 npm run dev
+```
+
+This swaps in an in-browser stand-in with a few fake people (sign in as
+`maya@example.com`, `leo@example.com`, `nora@example.com` or `sam@example.com`
+with the password `password`). Each browser tab keeps its own signed-in user, so
+two tabs can chat with each other. It is never included in production builds.
+
+### Tests
+
+```bash
+npm run test:sql     # row-level security, blocking, privacy, rate limits
+npm run test:merge   # offline/cloud merge rules
+```
+
+`test:sql` runs the real SQL files in an in-process Postgres (PGlite).
 
 ## Legal text
 

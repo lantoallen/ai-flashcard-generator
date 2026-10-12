@@ -4,23 +4,33 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAuth } from './AuthProvider';
+import Avatar from './Avatar';
+import { useSocial } from './SocialProvider';
 import { Icon, type IconName } from './icons';
 import { Logo } from './Logo';
 import ThemeMenu from './ThemeMenu';
 import { streakOf, useActivity } from '@/lib/activity';
 import { nowMs } from '@/lib/utils';
 
-const LINKS: { href: string; label: string; icon: IconName }[] = [
+type NavLink = { href: string; label: string; icon: IconName; signedInOnly?: boolean };
+
+const LINKS: NavLink[] = [
   { href: '/', label: 'Home', icon: 'home' },
   { href: '/create', label: 'Create', icon: 'plus' },
   { href: '/library', label: 'My Library', icon: 'library' },
-  { href: '/about', label: 'About', icon: 'info' },
+  { href: '/community', label: 'Community', icon: 'heart' },
+  { href: '/messages', label: 'Messages', icon: 'chat', signedInOnly: true },
 ];
 
 function isActive(pathname: string, href: string) {
   if (href === '/') return pathname === '/';
   if (href === '/library') {
     return pathname.startsWith('/library') || pathname.startsWith('/study');
+  }
+  if (href === '/community') {
+    return (
+      pathname.startsWith('/community') || pathname.startsWith('/people') || pathname.startsWith('/u/')
+    );
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -32,6 +42,8 @@ export default function Header() {
   const open = openOn === pathname;
   const streak = streakOf(useActivity(), nowMs());
   const auth = useAuth();
+  const social = useSocial();
+  const links = LINKS.filter((l) => !l.signedInOnly || auth.status === 'signedIn');
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -49,20 +61,29 @@ export default function Header() {
         </Link>
 
         <nav aria-label="Main" className="hidden items-center gap-1.5 md:flex">
-          {LINKS.map((l) => {
+          {links.map((l) => {
             const active = isActive(pathname, l.href);
             return (
               <Link
                 key={l.href}
                 href={l.href}
                 aria-current={active ? 'page' : undefined}
-                className={`rounded-full px-4 py-2 text-sm font-bold transition-colors ${
+                className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold transition-colors duration-200 ${
                   active
                     ? 'bg-ink text-bg'
                     : 'text-muted hover:bg-surface-2 hover:text-fg'
                 }`}
               >
                 {l.label}
+                {l.href === '/messages' && social.unread > 0 && (
+                  <span
+                    className="flex h-5 min-w-5 items-center justify-center rounded-full bg-coral px-1.5 text-[11px] font-extrabold"
+                    style={{ color: '#1b1033' }}
+                    aria-label={`${social.unread} unread`}
+                  >
+                    {social.unread > 99 ? '99+' : social.unread}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -82,20 +103,30 @@ export default function Header() {
           )}
           <ThemeMenu />
           {auth.enabled && auth.status !== 'loading' && (
-            <Link
-              href="/account"
-              className={
-                auth.status === 'signedIn'
-                  ? 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-sun text-base font-extrabold text-[#1b1033] shadow-[2px_2px_0_var(--shadow-color)]'
-                  : 'btn btn-secondary !py-2'
-              }
-              aria-label={auth.status === 'signedIn' ? `Account: ${auth.user?.name}` : 'Sign in'}
-              title={auth.status === 'signedIn' ? auth.user?.email : 'Sign in'}
-            >
-              {auth.status === 'signedIn'
-                ? (auth.user?.name?.[0] ?? '?').toUpperCase()
-                : 'Sign in'}
-            </Link>
+            auth.status === 'signedIn' ? (
+              <Link
+                href="/profile"
+                className="shrink-0 rounded-full transition-transform duration-200 hover:scale-105"
+                aria-label={`Your profile: ${social.profile?.displayName || auth.user?.name}`}
+                title="Your profile"
+              >
+                <Avatar
+                  size="sm"
+                  person={
+                    social.profile ?? {
+                      avatar: null,
+                      avatarColor: 'sun',
+                      displayName: auth.user?.name ?? '',
+                      username: auth.user?.email ?? '',
+                    }
+                  }
+                />
+              </Link>
+            ) : (
+              <Link href="/account" className="btn btn-secondary !py-2" aria-label="Sign in">
+                Sign in
+              </Link>
+            )
           )}
           <Link href="/create" className="btn btn-primary hidden sm:inline-flex">
             <Icon name="sparkles" size={16} />
@@ -121,7 +152,7 @@ export default function Header() {
           className="border-t-2 border-ink bg-bg px-4 py-4 md:hidden"
         >
           <ul className="flex flex-col gap-2">
-            {LINKS.map((l) => {
+            {links.map((l) => {
               const active = isActive(pathname, l.href);
               return (
                 <li key={l.href}>
@@ -137,6 +168,14 @@ export default function Header() {
                   >
                     <Icon name={l.icon} />
                     {l.label}
+                    {l.href === '/messages' && social.unread > 0 && (
+                      <span
+                        className="ml-auto flex h-6 min-w-6 items-center justify-center rounded-full bg-coral px-2 text-xs font-extrabold"
+                        style={{ color: '#1b1033' }}
+                      >
+                        {social.unread}
+                      </span>
+                    )}
                   </Link>
                 </li>
               );

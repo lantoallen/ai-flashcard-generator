@@ -20,7 +20,7 @@ export function LegalPage({
         Version {TERMS_VERSION}
       </p>
       <p className="mt-5 text-lg text-muted">{intro}</p>
-      <div className="mt-10 flex flex-col gap-10 [&_a]:font-semibold [&_a]:text-primary [&_a]:underline [&_h2]:text-2xl [&_h2]:font-extrabold [&_li]:text-muted [&_p]:text-muted [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6">
+      <div className="mt-10 flex flex-col gap-10 [&_a]:font-semibold [&_a]:text-primary-ink [&_a]:underline [&_h2]:text-2xl [&_h2]:font-extrabold [&_li]:text-muted [&_p]:text-muted [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6">
         {children}
       </div>
       <div className="mt-14 flex flex-wrap gap-3">

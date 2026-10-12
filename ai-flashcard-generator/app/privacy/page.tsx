@@ -34,7 +34,8 @@ export default function PrivacyPage() {
           <li>your sets, study progress, streaks and daily goal;</li>
           <li>your theme, accent color and study buddy’s name;</li>
           <li>whether you accepted the terms and the storage notice;</li>
-          <li>your sign-in session, if you create an account.</li>
+          <li>your sign-in session, if you create an account;</li>
+          <li>your chat history with the study buddy.</li>
         </ul>
         <p className="mt-3">
           This is needed for the app to work. You can clear it any time in your
@@ -59,10 +60,50 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2>4. AI processing</h2>
+        <h2>4. Community profile, posts and messages</h2>
         <p className="mt-3">
-          When you generate cards, add more cards, or use “Explain”, the text you
-          submit (your notes, topic, or the card’s term and definition) is sent
+          If you use the community features we store the following in our
+          database:
+        </p>
+        <ul>
+          <li>
+            <strong>Profile:</strong> a username, display name, optional photo
+            (a small image stored with your profile), bio, interests, accent
+            color, and your privacy choices. Other signed-in members can see
+            these, apart from your privacy choices.
+          </li>
+          <li>
+            <strong>Birthday (optional):</strong> shown only to you. It is used
+            to keep the community age-appropriate and is never displayed to
+            others.
+          </li>
+          <li>
+            <strong>Posts and likes:</strong> sets you publish (public or
+            private) and the sets you like.
+          </li>
+          <li>
+            <strong>Messages:</strong> the text you send, who it went to, and
+            when it was read. Only the two people in a conversation can read it
+            through the app. Messages are not end-to-end encrypted, so people
+            who administer the database could technically access them.
+          </li>
+          <li>
+            <strong>Blocks and reports:</strong> who you blocked, and reports
+            you file, so they can be reviewed.
+          </li>
+        </ul>
+        <p className="mt-3">
+          You can edit your profile, make posts private, delete posts, block
+          people and turn direct messages off at any time.
+        </p>
+      </section>
+
+      <section>
+        <h2>5. AI processing</h2>
+        <p className="mt-3">
+          When you generate cards, add more cards, use “Explain”, or chat with
+          the study buddy, the text you submit (your notes, topic, the card’s
+          term and definition, or your chat messages) is sent
           from our server to an AI provider such as Groq, and, if they are
           configured as backups, Google Gemini, Cerebras or OpenRouter. That
           provider’s own terms and privacy policy apply to how they handle it.
@@ -75,7 +116,7 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2>5. Share links</h2>
+        <h2>6. Share links</h2>
         <p className="mt-3">
           A share link contains the set itself in the part of the URL after the
           “#”, which browsers don’t send to servers. Anyone you give the link to
@@ -84,7 +125,7 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2>6. Hosting logs</h2>
+        <h2>7. Hosting logs</h2>
         <p className="mt-3">
           Our hosting platform may keep standard technical logs (such as IP
           address, browser type and request time) for security and operation of
@@ -93,7 +134,7 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2>7. Your choices</h2>
+        <h2>8. Your choices</h2>
         <ul>
           <li>
             <strong>Export:</strong> download any set as CSV or JSON, or back up
@@ -105,7 +146,10 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Delete cloud data:</strong> on the Account page you can
-            delete everything stored in your account and sign out.
+            delete everything stored in your account and sign out. Deleting
+            your account also removes your profile, the sets you shared, your
+            likes and your messages. Copies other members already saved to
+            their own libraries stay with them.
           </li>
           <li>
             <strong>Withdraw consent:</strong> stop using Flashly and delete your
@@ -115,15 +159,17 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2>8. Children</h2>
+        <h2>9. Children and age</h2>
         <p className="mt-3">
           Flashly is not intended for children under 13, and accounts require
-          you to be at least 13.
+          you to be at least 13. If you enter a birthday that makes you younger
+          than 13, we won’t save it. If you enter a birthday that makes you
+          under 18, direct messages are turned off by default.
         </p>
       </section>
 
       <section>
-        <h2>9. Changes and contact</h2>
+        <h2>10. Changes and contact</h2>
         <p className="mt-3">
           If this policy changes, the version date above changes and you may be
           asked to accept it again. For questions or requests, open an issue on

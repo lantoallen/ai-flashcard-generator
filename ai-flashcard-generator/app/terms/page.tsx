@@ -65,7 +65,52 @@ export default function TermsPage() {
       </section>
 
       <section>
-        <h2>5. AI-generated content</h2>
+        <h2>5. Community, profiles and messages</h2>
+        <p className="mt-3">
+          If you have an account you can create a profile, share study sets
+          with the community, like other members’ sets and message other
+          members. By doing so you agree to the following.
+        </p>
+        <ul>
+          <li>
+            <strong>Public means public to members.</strong> Your username,
+            display name, photo, bio and interests, and any set you publish as
+            public, can be seen by other signed-in members. Sets you publish as
+            private are visible only to you.
+          </li>
+          <li>
+            <strong>Be kind.</strong> Don’t post or send anything unlawful,
+            hateful, harassing, sexual, violent, deceptive, or that infringes
+            someone else’s rights. Don’t spam, impersonate people, or share
+            other people’s private information.
+          </li>
+          <li>
+            <strong>Your content stays yours.</strong> You allow Flashly to
+            store and show what you publish to the people you choose, and other
+            members may save a copy of a public set to their own library.
+          </li>
+          <li>
+            <strong>Messages are not end-to-end encrypted.</strong> They are
+            stored so you and the other person can read them. Don’t share
+            passwords, financial details or other sensitive information.
+          </li>
+          <li>
+            <strong>Safety tools.</strong> You can block and report people and
+            sets. Content that several members report may be hidden
+            automatically. We may remove content or suspend accounts that break
+            these rules, but we can’t promise to review everything quickly.
+          </li>
+          <li>
+            <strong>Younger members.</strong> You must be at least 13. If you
+            tell us you are under 18, direct messages are switched off by
+            default. Please talk to a trusted adult if anything online makes you
+            uncomfortable.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>6. AI-generated content</h2>
         <p className="mt-3">
           AI can be wrong, incomplete or out of date. Check generated cards
           against reliable sources before you rely on them, especially for exams
@@ -74,7 +119,7 @@ export default function TermsPage() {
       </section>
 
       <section>
-        <h2>6. Availability and your data</h2>
+        <h2>7. Availability and your data</h2>
         <ul>
           <li>
             Flashly is provided “as is”, with no promise that it will always be
@@ -92,7 +137,7 @@ export default function TermsPage() {
       </section>
 
       <section>
-        <h2>7. Liability</h2>
+        <h2>8. Liability</h2>
         <p className="mt-3">
           To the extent the law allows, Flashly and its maker are not liable for
           any loss arising from your use of the app, including lost data or
@@ -102,7 +147,7 @@ export default function TermsPage() {
       </section>
 
       <section>
-        <h2>8. Changes and contact</h2>
+        <h2>9. Changes and contact</h2>
         <p className="mt-3">
           We may update these terms. When we do, the version date above changes
           and you may be asked to accept them again. Questions or concerns?

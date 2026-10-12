@@ -98,11 +98,11 @@ export default function AboutPage() {
 
       <p className="mt-12 text-muted">
         Flashly is made by <strong className="text-fg">Allen</strong>. Read the{" "}
-        <Link href="/terms" className="font-bold text-primary underline">
+        <Link href="/terms" className="font-bold text-primary-ink underline">
           Terms
         </Link>{" "}
         and{" "}
-        <Link href="/privacy" className="font-bold text-primary underline">
+        <Link href="/privacy" className="font-bold text-primary-ink underline">
           Privacy Policy
         </Link>
         .

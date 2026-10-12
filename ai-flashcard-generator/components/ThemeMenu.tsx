@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import AccentPicker from './AccentPicker';
 import { Icon } from './icons';
+import { useSocial } from './SocialProvider';
+import { updateProfile } from '@/lib/community';
 import {
-  ACCENTS,
   setAccent,
   setTheme,
   useAccent,
@@ -22,6 +24,7 @@ export default function ThemeMenu() {
   const ref = useRef<HTMLDivElement>(null);
   const theme = useTheme();
   const accent = useAccent();
+  const social = useSocial();
 
   useEffect(() => {
     if (!open) return;
@@ -38,6 +41,15 @@ export default function ThemeMenu() {
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
+
+  function choose(value: string) {
+    setAccent(value);
+    // Remember the choice in the account so it follows you to other devices.
+    if (social.client && social.userId && social.status === 'ready') {
+      updateProfile(social.client, social.userId, { accent: value }).catch(() => {});
+    }
+  }
+
 
   return (
     <div ref={ref} className="relative">
@@ -56,7 +68,7 @@ export default function ThemeMenu() {
         <div
           role="dialog"
           aria-label="Theme"
-          className="panel pop absolute right-0 top-full z-50 mt-3 w-64 p-4"
+          className="panel pop absolute right-0 top-full z-50 mt-3 w-72 p-4"
         >
           <p className="text-xs font-extrabold uppercase tracking-wider text-muted">Mode</p>
           <div className="mt-2 grid grid-cols-2 gap-2">
@@ -66,9 +78,7 @@ export default function ThemeMenu() {
                 type="button"
                 aria-pressed={theme === m.id}
                 onClick={() => setTheme(m.id)}
-                className={`btn !py-2 ${
-                  theme === m.id ? 'btn-primary' : 'btn-secondary'
-                }`}
+                className={`btn !py-2 ${theme === m.id ? 'btn-primary' : 'btn-secondary'}`}
               >
                 <Icon name={m.id === 'dark' ? 'moon' : 'sun'} size={16} />
                 {m.label}
@@ -79,26 +89,8 @@ export default function ThemeMenu() {
           <p className="mt-4 text-xs font-extrabold uppercase tracking-wider text-muted">
             Accent color
           </p>
-          <div className="mt-2 flex gap-2.5" role="radiogroup" aria-label="Accent color">
-            {ACCENTS.map((a) => (
-              <button
-                key={a.id}
-                type="button"
-                role="radio"
-                aria-checked={accent === a.id}
-                aria-label={a.label}
-                title={a.label}
-                onClick={() => setAccent(a.id)}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-white transition-transform hover:scale-110"
-                style={{
-                  background: a.color,
-                  border: '2px solid var(--ink)',
-                  boxShadow: accent === a.id ? '0 0 0 3px var(--sun)' : undefined,
-                }}
-              >
-                {accent === a.id && <Icon name="check" size={16} />}
-              </button>
-            ))}
+          <div className="mt-2">
+            <AccentPicker value={accent} onChange={choose} />
           </div>
         </div>
       )}

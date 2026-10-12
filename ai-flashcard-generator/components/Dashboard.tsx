@@ -60,7 +60,7 @@ export default function Dashboard() {
           <Icon
             name={pct >= 1 ? 'check' : 'target'}
             size={22}
-            className="absolute inset-0 m-auto text-primary"
+            className="absolute inset-0 m-auto text-primary-ink"
           />
         </div>
         <div>

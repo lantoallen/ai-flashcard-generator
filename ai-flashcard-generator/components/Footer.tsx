@@ -35,6 +35,8 @@ export default function Footer() {
             <li><Link className="hover:text-fg hover:underline" href="/">Home</Link></li>
             <li><Link className="hover:text-fg hover:underline" href="/create">Create a set</Link></li>
             <li><Link className="hover:text-fg hover:underline" href="/library">My Library</Link></li>
+            <li><Link className="hover:text-fg hover:underline" href="/community">Community</Link></li>
+            <li><Link className="hover:text-fg hover:underline" href="/people">Find people</Link></li>
           </ul>
         </nav>
 

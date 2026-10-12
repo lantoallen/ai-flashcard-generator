@@ -96,7 +96,7 @@ export default function LibraryView() {
   if (sets.length === 0) {
     return (
       <div className="panel flex flex-col items-center gap-4 px-6 py-16 text-center">
-        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary-ink">
           <Icon name="library" size={28} />
         </span>
         <h2 className="text-xl font-semibold">Your library is empty</h2>
@@ -197,7 +197,7 @@ export default function LibraryView() {
                 <div className="flex items-start justify-between gap-3">
                   <Link
                     href={`/study/${s.id}`}
-                    className="font-display line-clamp-2 text-xl font-extrabold hover:text-primary"
+                    className="font-display line-clamp-2 text-xl font-extrabold hover:text-primary-ink"
                   >
                     {s.title}
                   </Link>

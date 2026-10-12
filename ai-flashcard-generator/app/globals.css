@@ -19,6 +19,8 @@
   --primary-hover: #5a37e8;
   --primary-soft: #ece7ff;
   --on-primary: #ffffff;
+  /* The accent when used as text/icons: kept readable even for pale custom colours. */
+  --primary-ink: var(--primary);
 
   --success: #12803f;
   --success-soft: #d8f7e3;
@@ -66,7 +68,8 @@
   --sky-soft: #10304a;
 }
 
-/* Accent colours (light, then dark). */
+/* Accent colours (light, then dark). The first four have hand-tuned values;
+   the rest, and any custom colour, are derived from --user-accent. */
 :root[data-accent="coral"] { --primary: #e8455c; --primary-hover: #d1334a; --primary-soft: #ffe4e8; }
 :root[data-accent="teal"]  { --primary: #0b8a78; --primary-hover: #087464; --primary-soft: #d3f5ee; }
 :root[data-accent="blue"]  { --primary: #2563eb; --primary-hover: #1d4fd1; --primary-soft: #dbe8ff; }
@@ -76,6 +79,29 @@
 :root[data-theme="dark"][data-accent="teal"]  { --primary: #3fd8c2; --primary-hover: #66e3d1; --primary-soft: #0f3a34; }
 :root[data-theme="dark"][data-accent="blue"]  { --primary: #6ea1ff; --primary-hover: #8fb7ff; --primary-soft: #172a52; }
 :root[data-theme="dark"][data-accent="amber"] { --primary: #fbbf24; --primary-hover: #fcd34d; --primary-soft: #3a2a0c; }
+
+:root[data-accent="indigo"] { --user-accent: #4f46e5; }
+:root[data-accent="cyan"]   { --user-accent: #0e7490; }
+:root[data-accent="green"]  { --user-accent: #15803d; }
+:root[data-accent="orange"] { --user-accent: #c2410c; }
+:root[data-accent="rose"]   { --user-accent: #be185d; }
+:root[data-accent="plum"]   { --user-accent: #9333ea; }
+:root[data-accent="slate"]  { --user-accent: #475569; }
+
+:root:is([data-accent="custom"], [data-accent="indigo"], [data-accent="cyan"], [data-accent="green"],
+         [data-accent="orange"], [data-accent="rose"], [data-accent="plum"], [data-accent="slate"]) {
+  --primary: var(--user-accent);
+  --primary-hover: color-mix(in srgb, var(--user-accent) 80%, #000);
+  --primary-soft: color-mix(in srgb, var(--user-accent) 14%, var(--surface));
+  --on-primary: var(--user-on, #ffffff);
+}
+:root:is([data-accent="custom"], [data-accent="indigo"], [data-accent="cyan"], [data-accent="green"],
+         [data-accent="orange"], [data-accent="rose"], [data-accent="plum"], [data-accent="slate"])[data-theme="dark"] {
+  --primary: color-mix(in srgb, var(--user-accent) 60%, #fff);
+  --primary-hover: color-mix(in srgb, var(--user-accent) 44%, #fff);
+  --primary-soft: color-mix(in srgb, var(--user-accent) 28%, var(--surface));
+  --on-primary: #130f26;
+}
 
 @theme inline {
   --color-bg: var(--bg);
@@ -88,6 +114,7 @@
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-soft: var(--primary-soft);
+  --color-primary-ink: var(--primary-ink);
   --color-on-primary: var(--on-primary);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
@@ -137,15 +164,14 @@ h1, h2, h3 {
     @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50;
     border: 2px solid var(--ink);
     box-shadow: 3px 3px 0 var(--shadow-color);
-    transition: transform 0.1s, box-shadow 0.1s, background-color 0.15s, color 0.15s;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.25s ease, color 0.25s ease;
   }
   .btn:hover:not(:disabled) {
-    transform: translate(-1px, -1px);
     box-shadow: 4px 4px 0 var(--shadow-color);
   }
   .btn:active:not(:disabled) {
-    transform: translate(2px, 2px);
-    box-shadow: 1px 1px 0 var(--shadow-color);
+    transform: translate(1px, 1px);
+    box-shadow: 2px 2px 0 var(--shadow-color);
   }
   .btn-lg {
     @apply px-6 py-3.5 text-base;
@@ -230,7 +256,7 @@ h1, h2, h3 {
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  transition: transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transition: transform 0.7s cubic-bezier(0.4, 0.1, 0.2, 1);
 }
 .flip-card[data-flipped="true"] {
   transform: rotateY(180deg);
@@ -250,26 +276,25 @@ h1, h2, h3 {
   25% { transform: translateX(-5px); }
   75% { transform: translateX(5px); }
 }
-.shake { animation: shake 0.3s ease-in-out; }
+.shake { animation: shake 0.45s ease-in-out; }
 
 @keyframes float {
   0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
-  50% { transform: translateY(-10px) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-5px) rotate(var(--r, 0deg)); }
 }
-.float { animation: float 6s ease-in-out infinite; }
+.float { animation: float 9s ease-in-out infinite; }
 
 @keyframes marquee {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
-.marquee-track { animation: marquee 38s linear infinite; width: max-content; }
+.marquee-track { animation: marquee 80s linear infinite; width: max-content; }
 
 @keyframes pop {
-  0% { transform: scale(0.6) rotate(-6deg); opacity: 0; }
-  70% { transform: scale(1.08) rotate(2deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0); opacity: 1; }
+  from { transform: translateY(6px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
 }
-.pop { animation: pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+.pop { animation: pop 0.35s ease-out both; }
 
 @keyframes confetti-fall {
   from { transform: translate3d(0, -20px, 0) rotate(0); opacity: 1; }
@@ -281,21 +306,21 @@ h1, h2, h3 {
   width: 10px;
   height: 16px;
   border-radius: 2px;
-  animation: confetti-fall 3s ease-in forwards;
+  animation: confetti-fall 4.5s ease-in forwards;
 }
 
 @keyframes pet-bob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
 }
-.pet-bob { animation: pet-bob 2.8s ease-in-out infinite; }
+.pet-bob { animation: pet-bob 4.5s ease-in-out infinite; }
 
 @keyframes pet-hop {
   0%, 100% { transform: translateY(0) rotate(0); }
   30% { transform: translateY(-14px) rotate(-5deg); }
   60% { transform: translateY(-4px) rotate(4deg); }
 }
-.pet-hop { animation: pet-hop 0.7s ease-in-out infinite; }
+.pet-hop { animation: pet-hop 1.4s ease-in-out infinite; }
 
 @keyframes pet-blink {
   0%, 92%, 100% { transform: scaleY(1); }
@@ -319,5 +344,13 @@ h1, h2, h3 {
     background: #fff !important;
     background-image: none !important;
     color: #000 !important;
+  }
+}
+
+/* Pale accents stay readable as text: cap the lightness in light mode. */
+@supports (color: oklch(from red l c h)) {
+  :root:is([data-accent="custom"], [data-accent="indigo"], [data-accent="cyan"], [data-accent="green"],
+           [data-accent="orange"], [data-accent="rose"], [data-accent="plum"], [data-accent="slate"]):not([data-theme="dark"]) {
+    --primary-ink: oklch(from var(--user-accent) min(l, 0.5) c h);
   }
 }

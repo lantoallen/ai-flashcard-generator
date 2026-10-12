@@ -194,7 +194,7 @@ export default function Test({ setId, cards, goTo }: ModeProps) {
                 <p className="mt-1 text-lg font-bold leading-snug">
                   {q.kind === 'tf' ? (
                     <>
-                      <span className="text-primary">{q.term}</span> means “{q.shown}”
+                      <span className="text-primary-ink">{q.term}</span> means “{q.shown}”
                     </>
                   ) : (
                     q.prompt

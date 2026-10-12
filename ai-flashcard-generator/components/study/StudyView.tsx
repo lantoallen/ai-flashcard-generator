@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useRef, useState } from 'react';
+import { useAuth } from '@/components/AuthProvider';
 import { Icon, type IconName } from '@/components/icons';
+import PublishDialog from '@/components/PublishDialog';
 import { download, safeFileName, toCsv, toText } from '@/lib/export';
 import { deleteSet, useHydrated, useSet } from '@/lib/storage';
 import { SOURCE_LABEL } from '@/lib/types';
@@ -32,6 +34,8 @@ const TABS: { id: Tab; label: string; icon: IconName }[] = [
 export default function StudyView() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const auth = useAuth();
+  const [publishing, setPublishing] = useState(false);
   const hydrated = useHydrated();
   const set = useSet(id);
   const [tab, setTab] = useState<Tab | null>(null);
@@ -197,6 +201,24 @@ export default function StudyView() {
               </button>
             </div>
           </details>
+          {auth.enabled && (
+            <button
+              type="button"
+              onClick={() => {
+                if (auth.status === 'signedIn') setPublishing(true);
+                else router.push('/account');
+              }}
+              className="btn btn-secondary"
+              title={
+                auth.status === 'signedIn'
+                  ? 'Share this set with the community'
+                  : 'Sign in to share this set'
+              }
+            >
+              <Icon name="upload" size={16} />
+              Share
+            </button>
+          )}
           <button
             type="button"
             onClick={remove}
@@ -269,6 +291,7 @@ export default function StudyView() {
       </div>
     </div>
     <PrintSheet title={set.title} cards={cards} />
+    {publishing && <PublishDialog set={set} onClose={() => setPublishing(false)} />}
     </>
   );
 }

@@ -47,6 +47,8 @@ const PATHS = {
   target:
     'M12 2a10 10 0 100 20 10 10 0 000-20zM12 6a6 6 0 100 12 6 6 0 000-12zM12 10a2 2 0 100 4 2 2 0 000-4z',
   repeat: 'M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3',
+  chat: 'M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z',
+  send: 'M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z',
 } as const;
 
 export type IconName = keyof typeof PATHS;

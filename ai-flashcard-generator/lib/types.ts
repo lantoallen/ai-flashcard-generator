@@ -13,7 +13,7 @@ export type Card = {
   due?: number;
 };
 
-export type SetSource = 'notes' | 'topic' | 'import' | 'manual' | 'demo';
+export type SetSource = 'notes' | 'topic' | 'import' | 'manual' | 'demo' | 'community';
 
 export type StudySet = {
   id: string;
@@ -38,4 +38,5 @@ export const SOURCE_LABEL: Record<SetSource, string> = {
   import: 'Imported',
   manual: 'Manual',
   demo: 'Demo',
+  community: 'From community',
 };

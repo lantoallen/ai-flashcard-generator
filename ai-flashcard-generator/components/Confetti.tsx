@@ -9,7 +9,7 @@ function r(i: number, seed: number) {
 }
 
 /** A one-shot burst of confetti. Mount it when something worth celebrating happens. */
-export default function Confetti({ count = 44 }: { count?: number }) {
+export default function Confetti({ count = 26 }: { count?: number }) {
   return (
     <div
       aria-hidden="true"

@@ -23,6 +23,7 @@ import {
 import { hasAcceptedTerms, TERMS_VERSION, useConsent } from '@/lib/consent';
 import { mergeSnapshots } from '@/lib/merge';
 import { DEFAULT_NAME, replacePet } from '@/lib/pet';
+import { clearPetChat } from '@/lib/petchat';
 import { clearLocalLibrary } from '@/lib/storage';
 import { accountsEnabled, getSupabase } from '@/lib/supabase';
 
@@ -259,6 +260,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearLocalLibrary();
         replaceActivity({});
         replacePet(DEFAULT_NAME, 0);
+        clearPetChat();
         applying.current = false;
       }
     },

@@ -1,7 +1,9 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon } from './icons';
+import PetChat from './PetChat';
 import PetFigure from './PetFigure';
 import { DAILY_GOAL, lastDays, streakOf, useActivity, useGoal } from '@/lib/activity';
 import {
@@ -14,7 +16,7 @@ import {
   type Mood,
   type Reaction,
 } from '@/lib/pet';
-import { useHydrated } from '@/lib/storage';
+import { useHydrated, useSets } from '@/lib/storage';
 import { nowMs } from '@/lib/utils';
 
 /** Floating study buddy. Reacts to what you do and levels up as you study. */
@@ -26,6 +28,9 @@ export default function Pet() {
   const [reaction, setReaction] = useState<Reaction | null>(null);
   const [open, setOpen] = useState(false);
   const [tipIndex, setTipIndex] = useState(0);
+  const [tab, setTab] = useState<'buddy' | 'chat'>('buddy');
+  const pathname = usePathname();
+  const sets = useSets();
   const [draftName, setDraftName] = useState('');
   const draftRef = useRef('');
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -80,6 +85,17 @@ export default function Pet() {
   const streak = streakOf(days, now);
   const lvl = levelOf(pet.xp);
 
+  const studyId = /^\/study\/([^/]+)/.exec(pathname)?.[1];
+  const studying = studyId ? sets.find((x) => x.id === studyId) : undefined;
+  const chatContext = {
+    setTitle: studying?.title,
+    terms: studying?.cards.map((c) => c.term).filter((t) => t.trim()).slice(0, 12),
+    level: lvl.level,
+    streak,
+    today,
+    goal,
+  };
+
   // Resting mood from how today is going; reactions override it briefly.
   const resting: Mood = today >= goal ? 'excited' : today > 0 ? 'happy' : streak > 0 ? 'sleepy' : 'happy';
   const mood: Mood = reaction?.mood ?? resting;
@@ -120,7 +136,7 @@ export default function Pet() {
         <div
           role="dialog"
           aria-label={`${pet.name}, your study buddy`}
-          className="panel pop w-72 p-4"
+          className="panel pop w-[min(22rem,calc(100vw-2rem))] p-4"
         >
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -142,6 +158,38 @@ export default function Pet() {
             </button>
           </div>
 
+          <div
+            role="tablist"
+            aria-label={`${pet.name} sections`}
+            className="mt-3 grid grid-cols-2 gap-1 rounded-xl border-2 border-ink bg-surface-2 p-1"
+          >
+            {(
+              [
+                ['buddy', 'Buddy'],
+                ['chat', 'Chat'],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={tab === id}
+                onClick={() => setTab(id)}
+                className={`rounded-lg px-3 py-1.5 text-sm font-bold transition-colors duration-200 ${
+                  tab === id ? 'bg-ink text-bg' : 'text-muted hover:text-fg'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {tab === 'chat' ? (
+            <div className="mt-3">
+              <PetChat name={pet.name} context={chatContext} />
+            </div>
+          ) : (
+            <>
           <div className="mt-3">
             <div
               className="h-3 overflow-hidden rounded-full border-2 border-ink bg-surface-2"
@@ -208,6 +256,8 @@ export default function Pet() {
               </button>
             </div>
           </div>
+            </>
+          )}
         </div>
       )}
 

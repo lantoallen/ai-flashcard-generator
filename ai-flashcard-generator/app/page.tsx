@@ -277,7 +277,7 @@ export default function Home() {
         <div className="mt-12 grid gap-x-8 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f) => (
             <div key={f.title} className="flex gap-4">
-              <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-primary-soft text-primary shadow-[2px_2px_0_var(--shadow-color)]">
+              <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-primary-soft text-primary-ink shadow-[2px_2px_0_var(--shadow-color)]">
                 <Icon name={f.icon} />
               </span>
               <div>

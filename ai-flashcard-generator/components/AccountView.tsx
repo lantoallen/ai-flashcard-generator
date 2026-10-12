@@ -222,11 +222,11 @@ function SignInForm() {
             />
             <span>
               I’m at least 13 and I agree to the{' '}
-              <Link href="/terms" target="_blank" className="font-bold text-primary underline">
+              <Link href="/terms" target="_blank" className="font-bold text-primary-ink underline">
                 Terms and Conditions
               </Link>{' '}
               and the{' '}
-              <Link href="/privacy" target="_blank" className="font-bold text-primary underline">
+              <Link href="/privacy" target="_blank" className="font-bold text-primary-ink underline">
                 Privacy Policy
               </Link>
               .
@@ -251,11 +251,11 @@ function SignInForm() {
 
         <div className="flex flex-wrap justify-between gap-2 text-sm">
           {mode === 'reset' ? (
-            <button type="button" onClick={() => setMode('signin')} className="font-bold text-primary underline">
+            <button type="button" onClick={() => setMode('signin')} className="font-bold text-primary-ink underline">
               Back to sign in
             </button>
           ) : (
-            <button type="button" onClick={() => setMode('reset')} className="font-bold text-primary underline">
+            <button type="button" onClick={() => setMode('reset')} className="font-bold text-primary-ink underline">
               Forgot your password?
             </button>
           )}
@@ -444,8 +444,8 @@ function Profile() {
             : 'No agreement is recorded for this account yet.'}
         </p>
         <div className="flex flex-wrap gap-3 text-sm font-bold">
-          <Link href="/terms" className="text-primary underline">Terms and Conditions</Link>
-          <Link href="/privacy" className="text-primary underline">Privacy Policy</Link>
+          <Link href="/terms" className="text-primary-ink underline">Terms and Conditions</Link>
+          <Link href="/privacy" className="text-primary-ink underline">Privacy Policy</Link>
         </div>
       </div>
 

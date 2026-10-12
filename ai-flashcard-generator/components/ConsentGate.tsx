@@ -90,11 +90,11 @@ export default function ConsentGate() {
             </ul>
             <p className="mt-5 text-sm text-muted">
               This is a summary. The full{' '}
-              <Link href="/terms" className="font-semibold text-primary underline">
+              <Link href="/terms" className="font-semibold text-primary-ink underline">
                 Terms and Conditions
               </Link>{' '}
               and{' '}
-              <Link href="/privacy" className="font-semibold text-primary underline">
+              <Link href="/privacy" className="font-semibold text-primary-ink underline">
                 Privacy Policy
               </Link>{' '}
               apply.
@@ -130,7 +130,7 @@ export default function ConsentGate() {
             <strong>Cookies.</strong> Flashly does not set cookies. Your sets and
             settings stay in this browser’s local storage. Accept to remember your
             choice, or close this notice.{' '}
-            <Link href="/privacy#storage" className="font-semibold text-primary underline">
+            <Link href="/privacy#storage" className="font-semibold text-primary-ink underline">
               Storage settings
             </Link>
           </p>
