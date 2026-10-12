@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { TERMS_VERSION } from '@/lib/terms';
 
-export const REPO_URL = 'https://github.com/lantoallen/ai-flashcard-generator';
+export const REPO_URL = 'https://github.com/lantoallen/flashly';
 
 export function LegalPage({
   title,

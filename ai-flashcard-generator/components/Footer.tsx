@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Icon } from './icons';
 import { Logo } from './Logo';
 
-const REPO = 'https://github.com/lantoallen/ai-flashcard-generator';
+const REPO = 'https://github.com/lantoallen/flashly';
 
 export default function Footer() {
   return (
