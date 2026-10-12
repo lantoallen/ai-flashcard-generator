@@ -9,8 +9,12 @@ type Question = {
   explanation: string;
 };
 
+type Mode = 'notes' | 'topic';
+
 export default function Home() {
+  const [mode, setMode] = useState<Mode>('notes');
   const [notes, setNotes] = useState('');
+  const [topic, setTopic] = useState('');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -23,10 +27,12 @@ export default function Home() {
     setRevealed({});
 
     try {
+      const body = mode === 'notes' ? { notes } : { topic };
+
       const res = await fetch('/api/generate-quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
 
@@ -42,6 +48,9 @@ export default function Home() {
     }
   }
 
+  const canGenerate =
+    mode === 'notes' ? notes.trim().length > 0 : topic.trim().length > 0;
+
   return (
     <div className="flex flex-col flex-1 items-center bg-zinc-50 dark:bg-black px-6 py-16">
       <main className="w-full max-w-2xl flex flex-col gap-6">
@@ -49,21 +58,55 @@ export default function Home() {
           AI Flashcard & Quiz Generator
         </h1>
         <p className="text-zinc-600 dark:text-zinc-400">
-          Paste your notes below and get instant multiple-choice questions to test yourself.
+          Paste your notes, or just tell us the topic — we&apos;ll generate the quiz for you.
         </p>
 
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          maxLength={8000}
-          rows={8}
-          placeholder="Paste your notes here..."
-          className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 text-black dark:text-white"
-        />
+        {/* Mode toggle */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setMode('notes')}
+            className={`rounded-full px-4 py-2 text-sm font-medium border ${
+              mode === 'notes'
+                ? 'bg-black text-white dark:bg-white dark:text-black'
+                : 'border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400'
+            }`}
+          >
+            Paste Notes
+          </button>
+          <button
+            onClick={() => setMode('topic')}
+            className={`rounded-full px-4 py-2 text-sm font-medium border ${
+              mode === 'topic'
+                ? 'bg-black text-white dark:bg-white dark:text-black'
+                : 'border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400'
+            }`}
+          >
+            Just a Topic
+          </button>
+        </div>
+
+        {mode === 'notes' ? (
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            maxLength={8000}
+            rows={8}
+            placeholder="Paste your notes here..."
+            className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 text-black dark:text-white"
+          />
+        ) : (
+          <input
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            maxLength={200}
+            placeholder="e.g. Photosynthesis, The French Revolution, Big-O Notation"
+            className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 text-black dark:text-white"
+          />
+        )}
 
         <button
           onClick={handleGenerate}
-          disabled={loading || notes.trim().length === 0}
+          disabled={loading || !canGenerate}
           className="rounded-full bg-black dark:bg-white text-white dark:text-black px-6 py-3 font-medium disabled:opacity-40"
         >
           {loading ? 'Generating...' : 'Generate Quiz'}
