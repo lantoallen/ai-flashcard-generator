@@ -1,4 +1,3 @@
-import { groq } from '@ai-sdk/groq';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import {
@@ -6,6 +5,7 @@ import {
   aiConfigured,
   aiFailure,
   clientIp,
+  groqModel,
   jsonError,
   MODELS,
   NOT_CONFIGURED,
@@ -96,7 +96,7 @@ export async function POST(req: Request) {
   for (const model of MODELS) {
     try {
       const { object } = await generateObject({
-        model: groq(model),
+        model: groqModel(model),
         schema: setSchema,
         prompt,
         providerOptions: AI_OPTIONS,

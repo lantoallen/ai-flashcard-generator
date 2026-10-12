@@ -1,10 +1,10 @@
-import { groq } from '@ai-sdk/groq';
 import { generateText } from 'ai';
 import {
   AI_OPTIONS,
   aiConfigured,
   aiFailure,
   clientIp,
+  groqModel,
   jsonError,
   MODELS,
   NOT_CONFIGURED,
@@ -50,7 +50,7 @@ Explain it in plain language in 2-3 short sentences, then give one concrete exam
   for (const model of MODELS) {
     try {
       const { text } = await generateText({
-        model: groq(model),
+        model: groqModel(model),
         prompt,
         providerOptions: AI_OPTIONS,
       });

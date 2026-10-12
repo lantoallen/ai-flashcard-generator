@@ -1,4 +1,4 @@
-import { clientIp, jsonError, MODELS, rateLimited } from '@/lib/server';
+import { clientIp, groqKey, jsonError, MODELS, rateLimited } from '@/lib/server';
 
 export const maxDuration = 15;
 
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     return jsonError('Too many requests. Please wait a minute and try again.', 429);
   }
 
-  const key = process.env.GROQ_API_KEY;
+  const key = groqKey();
   const headers = { 'Cache-Control': 'no-store' };
   if (!key) {
     return Response.json(

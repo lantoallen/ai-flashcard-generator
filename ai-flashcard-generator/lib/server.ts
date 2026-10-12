@@ -1,3 +1,5 @@
+import { createGroq } from '@ai-sdk/groq';
+
 /** Helpers shared by the API routes (server only). */
 
 // Models are tried in order; Groq retires models from time to time.
@@ -29,8 +31,24 @@ export function jsonError(message: string, status: number) {
   return Response.json({ error: message }, { status });
 }
 
+/**
+ * The Groq key, tolerant of common copy/paste mistakes in hosting dashboards:
+ * surrounding whitespace or quotes, or a pasted "GROQ_API_KEY=" prefix.
+ */
+export function groqKey(): string {
+  return (process.env.GROQ_API_KEY ?? '')
+    .trim()
+    .replace(/^GROQ_API_KEY\s*=\s*/i, '')
+    .replace(/^["']+|["']+$/g, '')
+    .trim();
+}
+
 export function aiConfigured(): boolean {
-  return Boolean(process.env.GROQ_API_KEY);
+  return groqKey().length > 0;
+}
+
+export function groqModel(id: string) {
+  return createGroq({ apiKey: groqKey() })(id);
 }
 
 export const NOT_CONFIGURED =
