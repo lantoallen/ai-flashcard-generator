@@ -15,6 +15,7 @@ import Flashcards from './Flashcards';
 import Match from './Match';
 import Quiz from './Quiz';
 import Review from './Review';
+import Test from './Test';
 import { ProgressBar, type Tab } from './shared';
 import Write from './Write';
 
@@ -22,6 +23,7 @@ const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'flashcards', label: 'Flashcards', icon: 'layers' },
   { id: 'review', label: 'Review', icon: 'repeat' },
   { id: 'quiz', label: 'Quiz', icon: 'quiz' },
+  { id: 'test', label: 'Test', icon: 'list' },
   { id: 'write', label: 'Write', icon: 'type' },
   { id: 'match', label: 'Match', icon: 'grid' },
   { id: 'cards', label: 'Edit cards', icon: 'edit' },
@@ -117,7 +119,8 @@ export default function StudyView() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
+    <>
+    <div className="no-print mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
       <Link
         href="/library"
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-fg"
@@ -176,6 +179,17 @@ export default function StudyView() {
               <button type="button" className="btn btn-ghost !justify-start" onClick={copyLink}>
                 <Icon name="link" size={16} />
                 Copy share link
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost !justify-start"
+                onClick={() => {
+                  closeMenu();
+                  window.print();
+                }}
+              >
+                <Icon name="download" size={16} />
+                Print / save as PDF
               </button>
               <button type="button" className="btn btn-ghost !justify-start" onClick={copyText}>
                 <Icon name="copy" size={16} />
@@ -248,11 +262,40 @@ export default function StudyView() {
           ))}
         {active === 'review' && <Review {...modeProps} />}
         {active === 'quiz' && <Quiz {...modeProps} />}
+        {active === 'test' && <Test {...modeProps} />}
         {active === 'write' && <Write {...modeProps} />}
         {active === 'match' && <Match {...modeProps} />}
         {active === 'cards' && <CardsEditor set={set} />}
       </div>
     </div>
+    <PrintSheet title={set.title} cards={cards} />
+    </>
+  );
+}
+
+/** Only visible when printing (or saving as PDF). */
+function PrintSheet({ title, cards }: { title: string; cards: { id: string; term: string; definition: string }[] }) {
+  return (
+    <section className="print-only mx-auto max-w-3xl p-6">
+      <h1 style={{ fontSize: '1.6rem', fontWeight: 800 }}>{title || 'Flashcards'}</h1>
+      <p style={{ marginBottom: '1rem' }}>{cards.length} cards · made with Flashly</p>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            <th style={{ width: '34%', textAlign: 'left', borderBottom: '2px solid #000', padding: '6px' }}>Term</th>
+            <th style={{ textAlign: 'left', borderBottom: '2px solid #000', padding: '6px' }}>Definition</th>
+          </tr>
+        </thead>
+        <tbody>
+          {cards.map((c) => (
+            <tr key={c.id} style={{ breakInside: 'avoid' }}>
+              <td style={{ verticalAlign: 'top', borderBottom: '1px solid #bbb', padding: '6px', fontWeight: 700 }}>{c.term}</td>
+              <td style={{ verticalAlign: 'top', borderBottom: '1px solid #bbb', padding: '6px' }}>{c.definition}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
   );
 }
 

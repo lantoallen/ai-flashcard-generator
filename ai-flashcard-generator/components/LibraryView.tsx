@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { useRef, useState } from 'react';
 import DemoButton from './DemoButton';
 import { Icon } from './icons';
-import { deleteSet, importSets, useHydrated, useSets } from '@/lib/storage';
+import { deleteSet, importSets, saveSet, useHydrated, useSets } from '@/lib/storage';
 import { download } from '@/lib/export';
 import { SOURCE_LABEL } from '@/lib/types';
-import { formatDate, validCards } from '@/lib/utils';
+import type { StudySet } from '@/lib/types';
+import { formatDate, nowMs, uid, validCards } from '@/lib/utils';
 
 type Sort = 'recent' | 'name' | 'size';
 
@@ -51,6 +52,29 @@ export default function LibraryView() {
     } catch {
       setNotice('That file isn’t a valid Flashly backup.');
     }
+  }
+
+  function duplicate(set: StudySet) {
+    const now = nowMs();
+    saveSet({
+      ...set,
+      id: uid(),
+      title: `${set.title} (copy)`.slice(0, 100),
+      createdAt: now,
+      updatedAt: now,
+      lastStudied: undefined,
+      bestQuiz: undefined,
+      bestMatchMs: undefined,
+      // A copy starts fresh: same cards, no study progress.
+      cards: set.cards.map((c) => ({
+        ...c,
+        id: uid(),
+        known: undefined,
+        box: undefined,
+        due: undefined,
+      })),
+    });
+    setNotice(`Duplicated “${set.title}”.`);
   }
 
   function remove(id: string, title: string) {
@@ -177,14 +201,26 @@ export default function LibraryView() {
                   >
                     {s.title}
                   </Link>
-                  <button
-                    type="button"
-                    onClick={() => remove(s.id, s.title)}
-                    className="btn btn-ghost !p-2"
-                    aria-label={`Delete ${s.title}`}
-                  >
-                    <Icon name="trash" size={16} />
-                  </button>
+                  <div className="flex shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => duplicate(s)}
+                      className="btn btn-ghost !p-2"
+                      aria-label={`Duplicate ${s.title}`}
+                      title="Duplicate"
+                    >
+                      <Icon name="copy" size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => remove(s.id, s.title)}
+                      className="btn btn-ghost !p-2"
+                      aria-label={`Delete ${s.title}`}
+                      title="Delete"
+                    >
+                      <Icon name="trash" size={16} />
+                    </button>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <span className="chip">{total} cards</span>

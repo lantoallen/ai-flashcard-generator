@@ -1,7 +1,7 @@
 import { Icon } from '@/components/icons';
 import type { Card } from '@/lib/types';
 
-export type Tab = 'flashcards' | 'review' | 'quiz' | 'write' | 'match' | 'cards';
+export type Tab = 'flashcards' | 'review' | 'quiz' | 'test' | 'write' | 'match' | 'cards';
 
 export type ModeProps = {
   setId: string;

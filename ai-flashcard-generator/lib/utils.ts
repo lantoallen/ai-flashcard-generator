@@ -66,19 +66,36 @@ export function checkTyped(input: string, answer: string): AnswerResult {
   return dist <= allowed ? 'close' : 'wrong';
 }
 
-/** Parse "term<sep>definition" lines (tab, " - ", ";", "," or ":"). */
+const CSV_ROW = /^"((?:[^"]|"")*)"\s*[,;\t]\s*"((?:[^"]|"")*)"\s*$/;
+
+/** Parse "term<sep>definition" lines (tab, " - ", ";", "," or ":") or quoted CSV rows. */
 export function parseCards(text: string): { term: string; definition: string }[] {
   const seps = ['\t', ' - ', ' – ', ' — ', ';', ',', ':'];
   const out: { term: string; definition: string }[] = [];
-  for (const raw of text.split(/\r?\n/)) {
+
+  const push = (term: string, definition: string) => {
+    term = term.trim();
+    definition = definition.trim();
+    if (!term || !definition) return;
+    // Skip a header row such as the one Flashly's own CSV export writes.
+    if (term.toLowerCase() === 'term' && definition.toLowerCase() === 'definition') return;
+    out.push({ term, definition });
+  };
+
+  for (const raw of text.replace(/^\uFEFF/, '').split(/\r?\n/)) {
     const line = raw.trim();
     if (!line) continue;
+
+    const csv = CSV_ROW.exec(line);
+    if (csv) {
+      push(csv[1].replace(/""/g, '"'), csv[2].replace(/""/g, '"'));
+      continue;
+    }
+
     for (const sep of seps) {
       const at = line.indexOf(sep);
       if (at > 0) {
-        const term = line.slice(0, at).trim();
-        const definition = line.slice(at + sep.length).trim();
-        if (term && definition) out.push({ term, definition });
+        push(line.slice(0, at), line.slice(at + sep.length));
         break;
       }
     }

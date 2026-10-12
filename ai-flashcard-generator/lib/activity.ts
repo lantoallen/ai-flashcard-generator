@@ -7,6 +7,44 @@ const EVENT = 'flashly:activity-changed';
 const KEEP_DAYS = 120;
 
 export const DAILY_GOAL = 20;
+export const GOAL_OPTIONS = [10, 20, 30, 50, 100];
+
+const GOAL_KEY = 'flashly:goal:v1';
+const GOAL_EVENT = 'flashly:goal-changed';
+
+function readGoal(): number {
+  if (typeof window === 'undefined') return DAILY_GOAL;
+  try {
+    const n = Number(window.localStorage.getItem(GOAL_KEY));
+    return Number.isFinite(n) && n >= 1 && n <= 500 ? Math.round(n) : DAILY_GOAL;
+  } catch {
+    return DAILY_GOAL;
+  }
+}
+
+export function useGoal(): number {
+  return useSyncExternalStore(
+    (onChange) => {
+      window.addEventListener(GOAL_EVENT, onChange);
+      window.addEventListener('storage', onChange);
+      return () => {
+        window.removeEventListener(GOAL_EVENT, onChange);
+        window.removeEventListener('storage', onChange);
+      };
+    },
+    readGoal,
+    () => DAILY_GOAL
+  );
+}
+
+export function setGoal(goal: number): void {
+  try {
+    window.localStorage.setItem(GOAL_KEY, String(goal));
+  } catch {
+    return;
+  }
+  window.dispatchEvent(new Event(GOAL_EVENT));
+}
 
 export type Days = Record<string, number>;
 const EMPTY: Days = {};

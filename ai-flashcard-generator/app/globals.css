@@ -289,3 +289,15 @@ h1, h2, h3 {
   .shake, .float, .marquee-track, .pop { animation: none; }
   .confetti { display: none; }
 }
+
+/* Printing: show only the card sheet. */
+.print-only { display: none; }
+@media print {
+  header, footer, .no-print, .skip-link { display: none !important; }
+  .print-only { display: block !important; }
+  html, body {
+    background: #fff !important;
+    background-image: none !important;
+    color: #000 !important;
+  }
+}

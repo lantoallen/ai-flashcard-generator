@@ -1,7 +1,14 @@
 'use client';
 
 import { Icon } from './icons';
-import { DAILY_GOAL, lastDays, streakOf, useActivity } from '@/lib/activity';
+import {
+  GOAL_OPTIONS,
+  lastDays,
+  setGoal,
+  streakOf,
+  useActivity,
+  useGoal,
+} from '@/lib/activity';
 import { isDue } from '@/lib/srs';
 import { useHydrated, useSets } from '@/lib/storage';
 import { nowMs } from '@/lib/utils';
@@ -11,6 +18,7 @@ export default function Dashboard() {
   const hydrated = useHydrated();
   const days = useActivity();
   const sets = useSets();
+  const goal = useGoal();
 
   if (!hydrated) return null;
 
@@ -19,13 +27,13 @@ export default function Dashboard() {
   const today = week[week.length - 1].count;
   const streak = streakOf(days, now);
   const studiedThisWeek = week.reduce((n, d) => n + d.count, 0);
-  const max = Math.max(DAILY_GOAL, ...week.map((d) => d.count));
+  const max = Math.max(goal, ...week.map((d) => d.count));
 
   const cards = sets.flatMap((s) => s.cards.filter((c) => c.term.trim() && c.definition.trim()));
   const mastered = cards.filter((c) => c.known).length;
   const due = cards.filter((c) => c.due !== undefined && isDue(c, now)).length;
 
-  const pct = Math.min(1, today / DAILY_GOAL);
+  const pct = Math.min(1, today / goal);
   const R = 34;
   const C = 2 * Math.PI * R;
 
@@ -59,11 +67,27 @@ export default function Dashboard() {
           <p className="text-xs font-extrabold uppercase tracking-wider text-muted">Today</p>
           <p className="font-display text-3xl font-extrabold">
             {today}
-            <span className="text-lg text-muted"> / {DAILY_GOAL}</span>
+            <span className="text-lg text-muted"> / {goal}</span>
           </p>
           <p className="text-sm font-semibold text-muted">
-            {pct >= 1 ? 'Goal reached. Nice!' : `${DAILY_GOAL - today} to hit your daily goal`}
+            {pct >= 1 ? 'Goal reached. Nice!' : `${goal - today} to hit your daily goal`}
           </p>
+          <label className="mt-1 flex items-center gap-2 text-xs font-bold text-muted">
+            Daily goal
+            <select
+              value={GOAL_OPTIONS.includes(goal) ? goal : ''}
+              onChange={(e) => setGoal(Number(e.target.value))}
+              className="rounded-lg border-2 border-ink bg-surface px-1.5 py-0.5 text-xs font-bold text-fg"
+              aria-label="Daily goal in cards"
+            >
+              {!GOAL_OPTIONS.includes(goal) && <option value="">{goal}</option>}
+              {GOAL_OPTIONS.map((g) => (
+                <option key={g} value={g}>
+                  {g} cards
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       </div>
 

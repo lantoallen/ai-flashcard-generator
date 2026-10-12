@@ -28,3 +28,61 @@ export function rateLimited(ip: string): boolean {
 export function jsonError(message: string, status: number) {
   return Response.json({ error: message }, { status });
 }
+
+export function aiConfigured(): boolean {
+  return Boolean(process.env.GROQ_API_KEY);
+}
+
+export const NOT_CONFIGURED =
+  'The AI service is not set up on this server yet (GROQ_API_KEY is missing).';
+
+type AiErrorShape = {
+  statusCode?: number;
+  responseHeaders?: Record<string, string>;
+  lastError?: AiErrorShape;
+};
+
+/** HTTP status and a "retry after N seconds" hint from a failed AI call. */
+export function aiErrorInfo(err: unknown): { status?: number; retryAfter?: number } {
+  const e = err as AiErrorShape | null;
+  const inner = e?.statusCode === undefined ? e?.lastError : e;
+  const status = inner?.statusCode;
+  const h = inner?.responseHeaders ?? {};
+
+  let retryAfter: number | undefined;
+  if (h['retry-after'] && Number.isFinite(Number(h['retry-after']))) {
+    retryAfter = Number(h['retry-after']);
+  } else if (h['x-ratelimit-reset-tokens']) {
+    // Looks like "5.5s" or "1m26.4s".
+    const m = /(?:(\d+)m)?([\d.]+)s/.exec(h['x-ratelimit-reset-tokens']);
+    if (m) retryAfter = Number(m[1] ?? 0) * 60 + Number(m[2]);
+  }
+  return { status, retryAfter: retryAfter === undefined ? undefined : Math.ceil(retryAfter) };
+}
+
+/** A user-facing message for a failed AI call, without leaking internals. */
+export function describeAiError(err: unknown): string {
+  const { status } = aiErrorInfo(err);
+  if (status === 401 || status === 403) {
+    return 'The AI service rejected this server’s API key. Check GROQ_API_KEY.';
+  }
+  if (status === 429) {
+    return 'The AI service is busy right now. Please try again in a few seconds.';
+  }
+  if (status === 400) {
+    return 'The AI had trouble with that request. Please try again.';
+  }
+  return 'Could not reach the AI service right now. Please try again in a moment.';
+}
+
+/** Standard JSON response for a failed AI call. */
+export function aiFailure(err: unknown) {
+  const { status, retryAfter } = aiErrorInfo(err);
+  return Response.json(
+    { error: describeAiError(err), retryAfter },
+    { status: status === 429 ? 429 : 502 }
+  );
+}
+
+/** Keep reasoning short so models spend their budget on the answer. */
+export const AI_OPTIONS = { groq: { reasoningEffort: 'low' as const } };

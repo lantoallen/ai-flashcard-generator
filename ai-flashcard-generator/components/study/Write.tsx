@@ -25,9 +25,20 @@ type Run = {
   idx: number;
   input: string;
   feedback: AnswerResult | null;
+  hints: number;
   results: (ReviewItem & { cardId: string })[];
   done: boolean;
 };
+
+/** Reveal the first `n` letters of each word and mask the rest, e.g. "Ch_______". */
+function maskAnswer(answer: string, n: number): string {
+  return answer
+    .split(' ')
+    .map((word) =>
+      [...word].map((ch, i) => (i < n || !/[\p{L}\p{N}]/u.test(ch) ? ch : '_')).join('')
+    )
+    .join(' ');
+}
 
 export default function Write({ setId, cards, goTo }: ModeProps) {
   const [filter, setFilter] = useState<SourceFilter>('all');
@@ -44,6 +55,7 @@ export default function Write({ setId, cards, goTo }: ModeProps) {
       idx: 0,
       input: '',
       feedback: null,
+      hints: 0,
       results: [],
       done: false,
     });
@@ -71,7 +83,7 @@ export default function Write({ setId, cards, goTo }: ModeProps) {
     }
 
     if (run.idx + 1 < run.deck.length) {
-      setRun({ ...run, idx: run.idx + 1, input: '', feedback: null });
+      setRun({ ...run, idx: run.idx + 1, input: '', feedback: null, hints: 0 });
     } else {
       touchProgress(setId, {});
       setRun({ ...run, done: true });
@@ -195,6 +207,25 @@ export default function Write({ setId, cards, goTo }: ModeProps) {
               >
                 I was right
               </button>
+            )}
+          </div>
+        )}
+
+        {fb === null && (
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setRun({ ...run, hints: Math.min(run.hints + 1, 4) })}
+              disabled={run.hints >= 4}
+              className="btn btn-secondary !py-2"
+            >
+              <Icon name="sparkles" size={16} />
+              {run.hints === 0 ? 'Hint' : 'Another hint'}
+            </button>
+            {run.hints > 0 && (
+              <p className="font-mono text-lg font-bold tracking-widest" aria-live="polite">
+                {maskAnswer(answer, run.hints)}
+              </p>
             )}
           </div>
         )}

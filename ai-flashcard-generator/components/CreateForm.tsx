@@ -9,6 +9,7 @@ import { parseCards, uid } from '@/lib/utils';
 
 type Tab = 'notes' | 'topic' | 'import';
 type Level = 'beginner' | 'intermediate' | 'advanced';
+type NewCard = { term: string; definition: string; distractors?: string[] };
 
 const TABS: { id: Tab; label: string; icon: 'edit' | 'search' | 'upload' }[] = [
   { id: 'notes', label: 'Paste notes', icon: 'edit' },
@@ -31,8 +32,14 @@ const IDEAS = [
   'Basic Spanish verbs',
 ];
 
+const PRESETS = [5, 10, 15, 20, 30, 50];
+const MIN_CARDS = 3;
+const MAX_CARDS = 50;
+const BATCH = 10; // cards per AI request; bigger sets are generated in several requests
+const MAX_RETRIES = 3;
 const MAX_NOTES = 8000;
 const MAX_TOPIC = 200;
+const MAX_FILE_BYTES = 1_000_000;
 
 export default function CreateForm() {
   const router = useRouter();
@@ -41,25 +48,30 @@ export default function CreateForm() {
   const [topic, setTopic] = useState('');
   const [importText, setImportText] = useState('');
   const [importTitle, setImportTitle] = useState('');
-  const [count, setCount] = useState(10);
+  const [countText, setCountText] = useState('10');
   const [level, setLevel] = useState<Level>('intermediate');
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [waiting, setWaiting] = useState('');
   const [error, setError] = useState('');
+  const [partial, setPartial] = useState<{ title: string; cards: NewCard[] } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const typed = Number(countText);
+  const countValid =
+    countText.trim() !== '' && Number.isInteger(typed) && typed >= MIN_CARDS && typed <= MAX_CARDS;
+  const count = countValid ? typed : 10;
 
   const parsed = tab === 'import' ? parseCards(importText) : [];
   const canGenerate =
     tab === 'notes'
-      ? notes.trim().length >= 20
+      ? notes.trim().length >= 20 && countValid
       : tab === 'topic'
-        ? topic.trim().length > 0
+        ? topic.trim().length > 0 && countValid
         : parsed.length >= 2;
 
-  function finish(
-    title: string,
-    source: SetSource,
-    cards: { term: string; definition: string; distractors?: string[] }[]
-  ) {
+  function finish(title: string, source: SetSource, cards: NewCard[]) {
     const now = Date.now();
     const set: StudySet = {
       id: uid(),
@@ -82,6 +94,7 @@ export default function CreateForm() {
     e.preventDefault();
     if (!canGenerate || loading) return;
     setError('');
+    setPartial(null);
 
     if (tab === 'import') {
       finish(importTitle.trim() || 'Imported set', 'import', parsed);
@@ -89,31 +102,94 @@ export default function CreateForm() {
     }
 
     setLoading(true);
+    setProgress(0);
     const controller = new AbortController();
     abortRef.current = controller;
+
+    let all: NewCard[] = [];
+    let title = '';
     try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(
-          tab === 'notes'
-            ? { notes, count, level }
-            : { topic, count, level }
-        ),
-        signal: controller.signal,
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error || 'Something went wrong. Please try again.');
+      // Request in batches, then top up any shortfall (duplicates get dropped).
+      let requests = 0;
+      const maxRequests = Math.ceil(count / BATCH) + 2;
+      while (all.length < count && requests < maxRequests) {
+        requests++;
+        const size = Math.min(BATCH, count - all.length);
+        const body = JSON.stringify({
+          ...(tab === 'notes' ? { notes } : { topic }),
+          count: size,
+          level,
+          exclude: all.map((c) => c.term),
+        });
+
+        let res: Response;
+        let data: { error?: string; retryAfter?: number; title?: string; cards?: NewCard[] };
+        for (let attempt = 0; ; attempt++) {
+          res = await fetch('/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body,
+            signal: controller.signal,
+          });
+          data = await res.json().catch(() => ({}));
+          // Rate limits and the AI's occasional empty answers are worth retrying.
+          const retryable = res.status === 429 || res.status === 502;
+          if (res.ok || !retryable || attempt >= MAX_RETRIES) break;
+          const seconds = Math.min(20, Math.max(3, data.retryAfter ?? 4)) + 1;
+          setWaiting(
+            res.status === 429
+              ? `The AI is catching its breath. Continuing in ${seconds}s…`
+              : 'Trying that batch again…'
+          );
+          await new Promise((r) => setTimeout(r, seconds * 1000));
+          setWaiting('');
+        }
+
+        if (!res.ok) {
+          const message = data.error || 'Something went wrong. Please try again.';
+          if (all.length === 0) {
+            setError(message);
+          } else {
+            // Keep what we already have instead of throwing it away.
+            setPartial({ title: title || topic || 'Untitled set', cards: all });
+            setError(`${message} We generated ${all.length} of ${count} cards.`);
+          }
+          return;
+        }
+
+        const fresh = data.cards ?? [];
+        all = [...all, ...fresh].slice(0, count);
+        if (!title) title = data.title ?? '';
+        setProgress(all.length);
+        if (fresh.length === 0) break; // nothing new to add, so stop asking
+      }
+      finish(title || topic || 'Untitled set', tab, all);
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') {
+        if (all.length) setPartial({ title: title || topic || 'Untitled set', cards: all });
         return;
       }
-      finish(data.title || topic || 'Untitled set', tab, data.cards);
-    } catch (err) {
-      if ((err as Error).name === 'AbortError') return;
       setError('Network error. Check your connection and try again.');
     } finally {
       setLoading(false);
+      setWaiting('');
       abortRef.current = null;
+    }
+  }
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (file.size > MAX_FILE_BYTES) {
+      setError('That file is too large. Please use a file under 1 MB.');
+      return;
+    }
+    setError('');
+    const text = await file.text();
+    setImportText((prev) => (prev.trim() ? `${prev.trimEnd()}\n${text}` : text));
+    if (!importTitle.trim()) {
+      setImportTitle(file.name.replace(/\.[^.]+$/, '').slice(0, 100));
     }
   }
 
@@ -141,11 +217,10 @@ export default function CreateForm() {
             onClick={() => {
               setTab(t.id);
               setError('');
+              setPartial(null);
             }}
-            className={`flex items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-semibold transition-colors ${
-              tab === t.id
-                ? 'bg-ink text-bg'
-                : 'text-muted hover:text-fg'
+            className={`flex items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-bold transition-colors ${
+              tab === t.id ? 'bg-ink text-bg' : 'text-muted hover:text-fg'
             }`}
           >
             <Icon name={t.icon} size={16} />
@@ -157,7 +232,7 @@ export default function CreateForm() {
 
       {tab === 'notes' && (
         <div className="flex flex-col gap-2">
-          <label htmlFor="notes" className="font-semibold">
+          <label htmlFor="notes" className="font-bold">
             Your notes
           </label>
           <textarea
@@ -177,7 +252,7 @@ export default function CreateForm() {
 
       {tab === 'topic' && (
         <div className="flex flex-col gap-3">
-          <label htmlFor="topic" className="font-semibold">
+          <label htmlFor="topic" className="font-bold">
             What do you want to learn?
           </label>
           <input
@@ -194,7 +269,7 @@ export default function CreateForm() {
                 key={idea}
                 type="button"
                 onClick={() => setTopic(idea)}
-                className="chip cursor-pointer transition-colors hover:bg-primary-soft hover:text-primary"
+                className="chip cursor-pointer transition-colors hover:bg-primary-soft"
               >
                 {idea}
               </button>
@@ -206,7 +281,7 @@ export default function CreateForm() {
       {tab === 'import' && (
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <label htmlFor="import-title" className="font-semibold">
+            <label htmlFor="import-title" className="font-bold">
               Set title
             </label>
             <input
@@ -219,9 +294,26 @@ export default function CreateForm() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="import-text" className="font-semibold">
-              Your cards
-            </label>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label htmlFor="import-text" className="font-bold">
+                Your cards
+              </label>
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="btn btn-secondary !py-1.5"
+              >
+                <Icon name="upload" size={16} />
+                Upload .csv / .txt
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".csv,.tsv,.txt,text/csv,text/plain,text/tab-separated-values"
+                className="hidden"
+                onChange={onFile}
+              />
+            </div>
             <textarea
               id="import-text"
               value={importText}
@@ -232,17 +324,13 @@ export default function CreateForm() {
             />
             <p className="text-sm text-muted">
               Separate the term and definition with a tab, “ - ”, a comma, a
-              semicolon or a colon.{' '}
+              semicolon or a colon. Flashly CSV exports import cleanly too.{' '}
               <strong className={parsed.length >= 2 ? 'text-success' : ''}>
                 {parsed.length} card{parsed.length === 1 ? '' : 's'} detected.
               </strong>
             </p>
           </div>
-          <button
-            type="button"
-            onClick={startBlank}
-            className="btn btn-ghost w-fit"
-          >
+          <button type="button" onClick={startBlank} className="btn btn-ghost w-fit">
             <Icon name="plus" size={16} />
             Or start with a blank set
           </button>
@@ -250,24 +338,66 @@ export default function CreateForm() {
       )}
 
       {tab !== 'import' && (
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div className="flex flex-col gap-2">
-            <label htmlFor="count" className="flex justify-between font-semibold">
-              Number of cards <span className="text-primary">{count}</span>
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div className="flex flex-col gap-3">
+            <label htmlFor="count" className="font-bold">
+              Number of cards
             </label>
-            <input
-              id="count"
-              type="range"
-              min={5}
-              max={20}
-              step={1}
-              value={count}
-              onChange={(e) => setCount(Number(e.target.value))}
-              className="accent-[var(--primary)]"
-            />
+            <div className="flex items-center gap-3">
+              <input
+                id="count"
+                type="number"
+                inputMode="numeric"
+                min={MIN_CARDS}
+                max={MAX_CARDS}
+                value={countText}
+                onChange={(e) => setCountText(e.target.value)}
+                onBlur={() => {
+                  // Snap to a valid number when leaving the field.
+                  const n = Math.round(Number(countText));
+                  setCountText(
+                    String(Number.isFinite(n) ? Math.min(MAX_CARDS, Math.max(MIN_CARDS, n)) : 10)
+                  );
+                }}
+                aria-invalid={!countValid}
+                className="input !w-24 text-center font-bold"
+              />
+              <input
+                type="range"
+                aria-label="Number of cards slider"
+                min={MIN_CARDS}
+                max={MAX_CARDS}
+                value={count}
+                onChange={(e) => setCountText(e.target.value)}
+                className="min-w-0 flex-1 accent-[var(--primary)]"
+              />
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {PRESETS.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setCountText(String(p))}
+                  aria-pressed={count === p && countValid}
+                  className={`chip cursor-pointer transition-colors ${
+                    count === p && countValid ? '!bg-ink !text-bg' : 'hover:bg-primary-soft'
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+            <p className={`text-xs ${countValid ? 'text-muted' : 'font-bold text-danger'}`}>
+              {countValid
+                ? count > BATCH
+                  ? 'Larger sets are generated in several steps, so they take a little longer.'
+                  : `Pick any number from ${MIN_CARDS} to ${MAX_CARDS}.`
+                : `Enter a whole number from ${MIN_CARDS} to ${MAX_CARDS}.`}
+            </p>
           </div>
-          <div className="flex flex-col gap-2">
-            <span className="font-semibold" id="level-label">
+
+          <div className="flex flex-col gap-3">
+            <span className="font-bold" id="level-label">
               Difficulty
             </span>
             <div
@@ -282,10 +412,8 @@ export default function CreateForm() {
                   role="radio"
                   aria-checked={level === l.id}
                   onClick={() => setLevel(l.id)}
-                  className={`rounded-lg px-2 py-2 text-sm font-medium transition-colors ${
-                    level === l.id
-                      ? 'bg-ink text-bg'
-                      : 'text-muted hover:text-fg'
+                  className={`rounded-lg px-2 py-2 text-sm font-bold transition-colors ${
+                    level === l.id ? 'bg-ink text-bg' : 'text-muted hover:text-fg'
                   }`}
                 >
                   {l.label}
@@ -297,12 +425,43 @@ export default function CreateForm() {
       )}
 
       {error && (
-        <p
+        <div
           role="alert"
-          className="rounded-xl bg-danger-soft px-4 py-3 text-sm font-medium text-danger"
+          className="flex flex-col items-start gap-3 rounded-xl border-2 border-ink bg-danger-soft px-4 py-3 text-sm font-semibold text-danger"
         >
-          {error}
-        </p>
+          <p>{error}</p>
+          {partial && (
+            <button
+              type="button"
+              onClick={() => finish(partial.title, tab, partial.cards)}
+              className="btn btn-primary !py-2"
+            >
+              <Icon name="check" size={16} />
+              Save the {partial.cards.length} cards I have
+            </button>
+          )}
+        </div>
+      )}
+
+      {loading && (
+        <div aria-live="polite" className="flex flex-col gap-2">
+          <p className="text-sm font-bold">
+            Generating cards… {progress} of {count}
+          </p>
+          {waiting && <p className="text-sm font-semibold text-warn">{waiting}</p>}
+          <div
+            className="h-3 overflow-hidden rounded-full border-2 border-ink bg-surface-2"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={count}
+            aria-valuenow={progress}
+          >
+            <div
+              className="brand-bg h-full rounded-full transition-all duration-500"
+              style={{ width: `${Math.max(6, (progress / count) * 100)}%` }}
+            />
+          </div>
+        </div>
       )}
 
       <div className="flex flex-wrap items-center gap-3">
@@ -324,7 +483,7 @@ export default function CreateForm() {
           ) : (
             <>
               <Icon name="sparkles" />
-              Generate flashcards
+              Generate {count} cards
             </>
           )}
         </button>
@@ -336,11 +495,6 @@ export default function CreateForm() {
           >
             Cancel
           </button>
-        )}
-        {loading && (
-          <p className="text-sm text-muted" aria-live="polite">
-            This usually takes 5–15 seconds.
-          </p>
         )}
       </div>
     </form>

@@ -26,14 +26,14 @@ export default function AboutPage() {
       <section className="mt-12">
         <h2 className="text-2xl font-semibold">How it works</h2>
         <ol className="mt-4 list-decimal space-y-2 pl-6 text-muted">
-          <li>You paste notes (up to 8,000 characters) or type a topic.</li>
+          <li>You paste notes (up to 8,000 characters) or type a topic, and choose how many cards you want (3 to 50).</li>
           <li>
             An AI model writes concise term and definition cards, along with
             believable wrong answers for the quiz.
           </li>
           <li>
             The set is saved in your browser. You can edit it, then study it in
-            Flashcards, Review (spaced repetition), Quiz, Write or Match mode.
+            Flashcards, Review (spaced repetition), Quiz, Test, Write or Match mode.
           </li>
         </ol>
       </section>

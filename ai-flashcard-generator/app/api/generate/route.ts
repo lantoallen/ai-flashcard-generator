@@ -1,14 +1,23 @@
 import { groq } from '@ai-sdk/groq';
 import { generateObject } from 'ai';
 import { z } from 'zod';
-import { clientIp, jsonError, MODELS, rateLimited } from '@/lib/server';
+import {
+  AI_OPTIONS,
+  aiConfigured,
+  aiFailure,
+  clientIp,
+  jsonError,
+  MODELS,
+  NOT_CONFIGURED,
+  rateLimited,
+} from '@/lib/server';
 
 // Allow AI calls to run longer than a host's default function timeout.
 export const maxDuration = 30;
 
 const MAX_NOTES = 8000;
 const MAX_TOPIC = 200;
-const MIN_COUNT = 5;
+const MIN_COUNT = 1;
 const MAX_COUNT = 20;
 const LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
 
@@ -24,6 +33,7 @@ const setSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  if (!aiConfigured()) return jsonError(NOT_CONFIGURED, 503);
   if (rateLimited(clientIp(req))) {
     return jsonError('Too many requests. Please wait a minute and try again.', 429);
   }
@@ -51,7 +61,7 @@ export async function POST(req: Request) {
         .filter((t): t is string => typeof t === 'string')
         .map((t) => t.trim().slice(0, 100))
         .filter(Boolean)
-        .slice(0, 60)
+        .slice(0, 100)
     : [];
 
   if (!notes && !topic) {
@@ -89,6 +99,7 @@ export async function POST(req: Request) {
         model: groq(model),
         schema: setSchema,
         prompt,
+        providerOptions: AI_OPTIONS,
       });
 
       const seen = new Set(exclude.map((t) => t.toLowerCase()));
@@ -108,7 +119,7 @@ export async function POST(req: Request) {
           return true;
         });
 
-      if (cards.length < (exclude.length ? 1 : 3)) {
+      if (cards.length < (exclude.length ? 1 : Math.min(3, count))) {
         lastError = new Error('Too few valid cards');
         continue;
       }
@@ -124,5 +135,5 @@ export async function POST(req: Request) {
   }
 
   console.error('All models failed:', lastError);
-  return jsonError('Could not generate your set right now. Please try again in a moment.', 502);
+  return aiFailure(lastError);
 }

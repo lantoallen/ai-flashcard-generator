@@ -15,11 +15,15 @@ type ApiCard = { term: string; definition: string; distractors?: string[] };
 
 export default function CardsEditor({ set }: { set: StudySet }) {
   const [busy, setBusy] = useState(false);
+  const [moreText, setMoreText] = useState('5');
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
 
   const incomplete = set.cards.filter(
     (c) => !c.term.trim() || !c.definition.trim()
   ).length;
+
+  const moreRaw = Math.round(Number(moreText));
+  const more = Number.isFinite(moreRaw) ? Math.min(20, Math.max(1, moreRaw)) : 5;
 
   async function generateMore() {
     setBusy(true);
@@ -30,7 +34,7 @@ export default function CardsEditor({ set }: { set: StudySet }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           topic: set.title.trim() || 'General knowledge',
-          count: 5,
+          count: more,
           exclude: set.cards.map((c) => c.term).filter((t) => t.trim()),
         }),
       });
@@ -167,24 +171,40 @@ export default function CardsEditor({ set }: { set: StudySet }) {
           <Icon name="plus" />
           Add a card
         </button>
-        <button
-          type="button"
-          onClick={generateMore}
-          disabled={busy}
-          className="btn btn-accent btn-lg"
-        >
-          {busy ? (
-            <>
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              Thinking…
-            </>
-          ) : (
-            <>
-              <Icon name="sparkles" />
-              Add 5 more with AI
-            </>
-          )}
-        </button>
+        <div className="flex gap-2">
+          <label className="sr-only" htmlFor="more-count">
+            How many cards to add
+          </label>
+          <input
+            id="more-count"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={20}
+            value={moreText}
+            onChange={(e) => setMoreText(e.target.value)}
+            onBlur={() => setMoreText(String(more))}
+            className="input !w-20 text-center font-bold"
+          />
+          <button
+            type="button"
+            onClick={generateMore}
+            disabled={busy}
+            className="btn btn-accent btn-lg min-w-0 flex-1"
+          >
+            {busy ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Thinking…
+              </>
+            ) : (
+              <>
+                <Icon name="sparkles" />
+                Add {more} more with AI
+              </>
+            )}
+          </button>
+        </div>
       </div>
       {message && (
         <p

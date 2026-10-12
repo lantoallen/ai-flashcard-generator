@@ -21,7 +21,7 @@ const STEPS = [
   },
   {
     title: "Study, repeat, win",
-    body: "Five study modes, streaks and spaced repetition keep it in your head.",
+    body: "Six study modes, streaks and spaced repetition keep it in your head.",
     tint: "bg-mint-soft",
   },
 ];
@@ -49,18 +49,25 @@ const MODES: { icon: IconName; title: string; body: string; tint: string; tilt: 
     tilt: "md:-rotate-1",
   },
   {
+    icon: "list",
+    title: "Test",
+    body: "A real practice exam: multiple choice, true/false and written, graded when you submit.",
+    tint: "bg-primary-soft",
+    tilt: "md:rotate-1",
+  },
+  {
     icon: "type",
     title: "Write",
     body: "Type from memory. Small typos are forgiven, so you’re graded on knowledge.",
     tint: "bg-sun-soft",
-    tilt: "md:rotate-1",
+    tilt: "md:-rotate-1",
   },
   {
     icon: "grid",
     title: "Match",
     body: "Pair terms with definitions against the clock and beat your best time.",
     tint: "bg-mint-soft",
-    tilt: "md:-rotate-1",
+    tilt: "md:rotate-1",
   },
 ];
 
@@ -69,7 +76,8 @@ const FEATURES: { icon: IconName; title: string; body: string }[] = [
   { icon: "link", title: "Share with a link", body: "Send a set to a friend. The cards travel in the link itself, so there’s no upload." },
   { icon: "sparkles", title: "AI explain & add more", body: "Ask for a plain-English explanation, or have the AI add more cards to a set." },
   { icon: "palette", title: "Make it yours", body: "Light or dark, plus five accent colors. Your pick is remembered." },
-  { icon: "download", title: "Export anywhere", body: "CSV, JSON or plain text for Anki, Quizlet and spreadsheets." },
+  { icon: "download", title: "Import, export, print", body: "Upload a CSV, export to Anki or Quizlet, or print your cards as a study sheet." },
+  { icon: "edit", title: "Any number of cards", body: "Ask for 3 cards or 50. Big sets are built in steps so they stay reliable." },
   { icon: "lock", title: "Private by default", body: "No sign-up. Sets live in your browser, not on our servers." },
 ];
 
@@ -229,7 +237,7 @@ export default function Home() {
       <section className="border-y-2 border-ink bg-surface-2">
         <div className="mx-auto w-full max-w-6xl px-4 py-20 sm:px-6">
           <div className="text-center">
-            <span className="eyebrow bg-mint">Five ways to study</span>
+            <span className="eyebrow bg-mint">Six ways to study</span>
             <h2 className="font-display mt-4 text-4xl font-extrabold tracking-tight sm:text-5xl">
               Never get bored of the same deck
             </h2>

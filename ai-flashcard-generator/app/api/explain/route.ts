@@ -1,6 +1,15 @@
 import { groq } from '@ai-sdk/groq';
 import { generateText } from 'ai';
-import { clientIp, jsonError, MODELS, rateLimited } from '@/lib/server';
+import {
+  AI_OPTIONS,
+  aiConfigured,
+  aiFailure,
+  clientIp,
+  jsonError,
+  MODELS,
+  NOT_CONFIGURED,
+  rateLimited,
+} from '@/lib/server';
 
 // Allow AI calls to run longer than a host's default function timeout.
 export const maxDuration = 30;
@@ -9,6 +18,7 @@ const clip = (v: unknown, max: number) =>
   typeof v === 'string' ? v.trim().slice(0, max) : '';
 
 export async function POST(req: Request) {
+  if (!aiConfigured()) return jsonError(NOT_CONFIGURED, 503);
   if (rateLimited(clientIp(req))) {
     return jsonError('Too many requests. Please wait a minute and try again.', 429);
   }
@@ -39,7 +49,11 @@ Explain it in plain language in 2-3 short sentences, then give one concrete exam
   let lastError: unknown;
   for (const model of MODELS) {
     try {
-      const { text } = await generateText({ model: groq(model), prompt });
+      const { text } = await generateText({
+        model: groq(model),
+        prompt,
+        providerOptions: AI_OPTIONS,
+      });
       const explanation = text.trim();
       if (explanation) return Response.json({ explanation });
     } catch (err) {
@@ -49,5 +63,5 @@ Explain it in plain language in 2-3 short sentences, then give one concrete exam
   }
 
   console.error('All models failed:', lastError);
-  return jsonError('Could not generate an explanation right now. Please try again.', 502);
+  return aiFailure(lastError);
 }
