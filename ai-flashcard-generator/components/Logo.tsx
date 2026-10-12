@@ -1,56 +1,41 @@
 import { useId } from 'react';
 
-/** Two stacked flashcards with a spark, on a gradient tile. */
-export function LogoMark({ size = 36 }: { size?: number }) {
+/**
+ * Letter-mark "F": three rounded bars (a card stack turned into a letter)
+ * plus a sun-yellow dot, on a coral-to-violet tile.
+ */
+export function LogoMark({ size = 40 }: { size?: number }) {
   const gradientId = useId();
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 32 32"
+      viewBox="0 0 40 40"
       fill="none"
       aria-hidden="true"
+      className="shrink-0"
     >
       <defs>
-        <linearGradient id={gradientId} x1="2" y1="2" x2="30" y2="30">
-          <stop stopColor="#6366f1" />
-          <stop offset="1" stopColor="#d946ef" />
+        <linearGradient id={gradientId} x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#ff5d73" />
+          <stop offset="1" stopColor="#6c47ff" />
         </linearGradient>
       </defs>
-      <rect width="32" height="32" rx="9" fill={`url(#${gradientId})`} />
-      <rect
-        x="8.5"
-        y="6.5"
-        width="15"
-        height="19"
-        rx="3"
-        fill="#fff"
-        fillOpacity="0.5"
-        transform="rotate(-12 16 16)"
-      />
-      <rect
-        x="8.5"
-        y="6.5"
-        width="15"
-        height="19"
-        rx="3"
-        fill="#fff"
-        transform="rotate(5 16 16)"
-      />
-      <path
-        d="M16 11.2l1.3 3 3 1.3-3 1.3-1.3 3-1.3-3-3-1.3 3-1.3z"
-        fill={`url(#${gradientId})`}
-        transform="rotate(5 16 16)"
-      />
+      <rect x="3" y="3" width="36" height="36" rx="11" fill="#1b1033" />
+      <rect x="1" y="1" width="36" height="36" rx="11" fill={`url(#${gradientId})`} stroke="#1b1033" strokeWidth="2.5" />
+      <rect x="10.5" y="9" width="7" height="22" rx="3.5" fill="#fff" />
+      <rect x="10.5" y="9" width="17" height="7" rx="3.5" fill="#fff" />
+      <rect x="10.5" y="19" width="12" height="6" rx="3" fill="#fff" />
+      <circle cx="28.5" cy="27.5" r="4.2" fill="#ffc83d" stroke="#1b1033" strokeWidth="2" />
     </svg>
   );
 }
 
-export function Logo({ size = 36 }: { size?: number }) {
+export function Logo({ size = 40 }: { size?: number }) {
   return (
     <span className="inline-flex items-center gap-2.5">
       <LogoMark size={size} />
-      <span className="text-xl font-bold tracking-tight">
+      <span className="font-display text-2xl font-extrabold tracking-tight">
         Flash<span className="brand-text">ly</span>
       </span>
     </span>

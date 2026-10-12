@@ -5,8 +5,12 @@ export type Card = {
   /** Plausible wrong answers (for definitions) used by the quiz. */
   distractors?: string[];
   starred?: boolean;
-  /** "Got it" in flashcard mode. */
+  /** "Got it" in flashcard mode, or box 3+ in spaced-repetition review. */
   known?: boolean;
+  /** Spaced repetition: Leitner box (0 = new / forgotten). */
+  box?: number;
+  /** Spaced repetition: when the card is next due (ms since epoch). */
+  due?: number;
 };
 
 export type SetSource = 'notes' | 'topic' | 'import' | 'manual' | 'demo';

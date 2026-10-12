@@ -173,7 +173,7 @@ export default function LibraryView() {
                 <div className="flex items-start justify-between gap-3">
                   <Link
                     href={`/study/${s.id}`}
-                    className="line-clamp-2 text-lg font-semibold hover:text-primary"
+                    className="font-display line-clamp-2 text-xl font-extrabold hover:text-primary"
                   >
                     {s.title}
                   </Link>
@@ -199,7 +199,7 @@ export default function LibraryView() {
                     <span>{formatDate(s.updatedAt)}</span>
                   </div>
                   <div
-                    className="h-2 overflow-hidden rounded-full bg-surface-2"
+                    className="h-3 overflow-hidden rounded-full border-2 border-ink bg-surface-2"
                     role="progressbar"
                     aria-valuenow={pct}
                     aria-valuemin={0}
@@ -212,7 +212,7 @@ export default function LibraryView() {
                     />
                   </div>
                 </div>
-                <Link href={`/study/${s.id}`} className="btn btn-secondary mt-auto">
+                <Link href={`/study/${s.id}`} className="btn btn-primary mt-auto">
                   Study
                   <Icon name="right" size={16} />
                 </Link>

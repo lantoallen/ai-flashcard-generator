@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Confetti from '@/components/Confetti';
 import { Icon } from '@/components/icons';
+import { logActivity } from '@/lib/activity';
 import { touchProgress } from '@/lib/storage';
 import { formatMs, shuffle } from '@/lib/utils';
 import { NeedMore, Segmented, type ModeProps } from './shared';
@@ -88,6 +90,7 @@ export default function Match({ setId, cards, bestMatchMs, goTo }: ModeProps) {
         const elapsed = finishedAt - run.startedAt;
         const improved = comparable && (bestMatchMs === undefined || elapsed < bestMatchMs);
         touchProgress(setId, { bestMatchMs: improved ? elapsed : bestMatchMs });
+        logActivity(run.pairs);
         setNewBest(improved && bestMatchMs !== undefined);
         setNow(finishedAt);
         setRun({ ...run, matched, selected: null, finishedAt });
@@ -169,6 +172,7 @@ export default function Match({ setId, cards, bestMatchMs, goTo }: ModeProps) {
 
       {run.finishedAt !== null && (
         <div role="status" className="panel flex flex-col items-center gap-1 px-6 py-8 text-center">
+          <Confetti />
           <p className="brand-text text-4xl font-bold">{formatMs(elapsed)}</p>
           <p className="font-semibold">
             Board cleared with {run.misses} miss{run.misses === 1 ? '' : 'es'}.

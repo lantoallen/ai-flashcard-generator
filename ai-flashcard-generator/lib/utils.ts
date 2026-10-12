@@ -1,5 +1,8 @@
 import type { Card } from './types';
 
+/** Current time in ms. A named helper so render code can read the clock deliberately. */
+export const nowMs = () => Date.now();
+
 export function uid(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID();

@@ -5,7 +5,9 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Icon, type IconName } from './icons';
 import { Logo } from './Logo';
-import ThemeToggle from './ThemeToggle';
+import ThemeMenu from './ThemeMenu';
+import { streakOf, useActivity } from '@/lib/activity';
+import { nowMs } from '@/lib/utils';
 
 const LINKS: { href: string; label: string; icon: IconName }[] = [
   { href: '/', label: 'Home', icon: 'home' },
@@ -27,6 +29,7 @@ export default function Header() {
   // Remember which page the menu was opened on, so it closes itself on navigation.
   const [openOn, setOpenOn] = useState<string | null>(null);
   const open = openOn === pathname;
+  const streak = streakOf(useActivity(), nowMs());
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -37,13 +40,13 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-bg/80 backdrop-blur">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+    <header className="sticky top-0 z-50 border-b-2 border-ink bg-bg/90 backdrop-blur">
+      <div className="mx-auto flex h-[4.5rem] w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link href="/" aria-label="Flashly home" className="shrink-0">
           <Logo />
         </Link>
 
-        <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
+        <nav aria-label="Main" className="hidden items-center gap-1.5 md:flex">
           {LINKS.map((l) => {
             const active = isActive(pathname, l.href);
             return (
@@ -51,9 +54,9 @@ export default function Header() {
                 key={l.href}
                 href={l.href}
                 aria-current={active ? 'page' : undefined}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                className={`rounded-full px-4 py-2 text-sm font-bold transition-colors ${
                   active
-                    ? 'bg-primary-soft text-primary'
+                    ? 'bg-ink text-bg'
                     : 'text-muted hover:bg-surface-2 hover:text-fg'
                 }`}
               >
@@ -64,14 +67,25 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <ThemeToggle />
+          {streak > 0 && (
+            <Link
+              href="/library"
+              className="chip bg-sun-soft"
+              title={`${streak}-day study streak`}
+              aria-label={`${streak}-day study streak`}
+            >
+              <Icon name="flame" size={14} className="text-coral" />
+              {streak}
+            </Link>
+          )}
+          <ThemeMenu />
           <Link href="/create" className="btn btn-primary hidden sm:inline-flex">
             <Icon name="sparkles" size={16} />
             New set
           </Link>
           <button
             type="button"
-            className="btn btn-ghost !p-2.5 md:hidden"
+            className="btn btn-secondary !p-2.5 md:hidden"
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
             aria-controls="mobile-menu"
@@ -86,9 +100,9 @@ export default function Header() {
         <nav
           id="mobile-menu"
           aria-label="Mobile"
-          className="border-t border-line bg-bg px-4 py-3 md:hidden"
+          className="border-t-2 border-ink bg-bg px-4 py-4 md:hidden"
         >
-          <ul className="flex flex-col gap-1">
+          <ul className="flex flex-col gap-2">
             {LINKS.map((l) => {
               const active = isActive(pathname, l.href);
               return (
@@ -97,10 +111,10 @@ export default function Header() {
                     href={l.href}
                     onClick={() => setOpenOn(null)}
                     aria-current={active ? 'page' : undefined}
-                    className={`flex items-center gap-3 rounded-xl px-3 py-3 text-base font-medium ${
+                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-base font-bold ${
                       active
-                        ? 'bg-primary-soft text-primary'
-                        : 'text-fg hover:bg-surface-2'
+                        ? 'bg-ink text-bg'
+                        : 'border-2 border-line bg-surface text-fg'
                     }`}
                   >
                     <Icon name={l.icon} />

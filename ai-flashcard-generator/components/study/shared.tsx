@@ -1,10 +1,11 @@
 import { Icon } from '@/components/icons';
 import type { Card } from '@/lib/types';
 
-export type Tab = 'flashcards' | 'quiz' | 'write' | 'match' | 'cards';
+export type Tab = 'flashcards' | 'review' | 'quiz' | 'write' | 'match' | 'cards';
 
 export type ModeProps = {
   setId: string;
+  title: string;
   /** Cards with both sides filled in. */
   cards: Card[];
   bestQuiz?: number;
@@ -37,7 +38,7 @@ export function Segmented<T extends string>({
       <div
         role="radiogroup"
         aria-label={label}
-        className="flex flex-wrap gap-1 rounded-xl bg-surface-2 p-1"
+        className="flex flex-wrap gap-1 rounded-xl border-2 border-ink bg-surface-2 p-1"
       >
         {options.map((o) => (
           <button
@@ -49,7 +50,7 @@ export function Segmented<T extends string>({
             onClick={() => onChange(o.value)}
             className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
               value === o.value
-                ? 'bg-surface text-fg shadow-sm'
+                ? 'bg-ink text-bg'
                 : 'text-muted hover:text-fg'
             }`}
           >
@@ -91,7 +92,7 @@ export function ProgressBar({ value, max }: { value: number; max: number }) {
   const pct = max ? Math.round((value / max) * 100) : 0;
   return (
     <div
-      className="h-2 w-full overflow-hidden rounded-full bg-surface-2"
+      className="h-3 w-full overflow-hidden rounded-full border-2 border-ink bg-surface-2"
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={max}

@@ -1,24 +1,31 @@
 # Flashly – AI flashcards & quizzes
 
-Turn pasted notes or any topic into flashcards and quizzes, then study them four
+Turn pasted notes or any topic into flashcards and quizzes, then study them five
 different ways. Free to run, no accounts, no database.
 
 ## Features
 
 - **AI generation** from pasted notes (up to 8,000 characters) or a topic, with
   adjustable card count (5–20) and difficulty.
-- **Flashcards**: flip, shuffle, star, “Got it / Still learning”, read aloud,
-  keyboard shortcuts, filter by starred or unmastered cards.
-- **Quiz**: multiple choice using AI-written distractors, review of every miss,
-  retry only the missed questions, best score tracking.
-- **Write**: type answers from memory; typos and punctuation are forgiven.
-- **Match**: timed pairing game with best-time tracking.
+- **Five study modes**
+  - *Flashcards*: flip, shuffle, star, “Got it / Still learning”, read aloud,
+    keyboard shortcuts, and an **AI “Explain”** button for any card.
+  - *Review*: **spaced repetition** (Leitner boxes) that schedules each card
+    just before you'd forget it.
+  - *Quiz*: multiple choice using AI-written distractors, review of every miss,
+    retry only the missed questions, best score tracking.
+  - *Write*: type answers from memory; typos and punctuation are forgiven.
+  - *Match*: timed pairing game with best-time tracking.
+- **Progress**: daily goal, study streak and a 7-day chart on the Library page.
+- **Share a set with a link**: the set is compressed into the URL hash, so
+  there is no server-side storage.
 - **Library**: sets are stored in the browser (localStorage), with search, sort,
   and JSON backup/restore.
-- **Edit** any card, add your own, or **import** a list (tab / comma / “ - ”
-  separated).
+- **Edit** any card, add your own, have the AI **add 5 more cards**, or
+  **import** a list (tab / comma / “ - ” separated).
 - **Export** to CSV, JSON or plain text (paste into Quizlet, Anki, Sheets).
-- Dark mode, responsive layout, built-in demo set that works without the AI.
+- Light/dark mode and five accent colors, responsive layout, confetti, and a
+  built-in demo set that works without the AI.
 
 ## Getting started
 
@@ -44,15 +51,17 @@ Open <http://localhost:3000>.
 
 | Piece | Where |
 | --- | --- |
-| Generation endpoint (validation, rate limit, model fallback) | `app/api/generate/route.ts` |
+| Generation and explain endpoints (validation, rate limit, model fallback) | `app/api/generate/route.ts`, `app/api/explain/route.ts` |
 | Pages: landing, create, library, study, about | `app/` |
 | Study modes | `components/study/` |
-| Local persistence (`useSyncExternalStore` over localStorage) | `lib/storage.ts` |
+| Local persistence (`useSyncExternalStore` over localStorage) | `lib/storage.ts`, `lib/activity.ts` |
+| Spaced repetition and share links | `lib/srs.ts`, `lib/share.ts` |
+| Theme and accent colors | `lib/theme.ts`, `app/globals.css` |
 | Quiz building and typed-answer checking | `lib/quiz.ts`, `lib/utils.ts` |
 
 Models are tried in order (`openai/gpt-oss-120b`, then `openai/gpt-oss-20b`).
 Groq retires models occasionally. If generation starts failing with
-“model does not exist”, update the `MODELS` list in the route.
+“model does not exist”, update the `MODELS` list in `lib/server.ts`.
 
 ## Deploying
 
@@ -62,5 +71,6 @@ instance.
 
 ## Privacy
 
-Sets and progress never leave the browser. Only the text you submit for
-generation is sent to Groq.
+Sets, progress and streaks never leave the browser. Only the text you submit
+for generation or explanation is sent to Groq. Share links carry the set in
+the URL hash, which browsers don't send to servers.

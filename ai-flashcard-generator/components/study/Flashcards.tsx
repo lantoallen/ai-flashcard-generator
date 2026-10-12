@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Confetti from '@/components/Confetti';
 import { Icon } from '@/components/icons';
+import { logActivity } from '@/lib/activity';
 import { resetProgress, touchProgress, updateCard } from '@/lib/storage';
 import { shuffle } from '@/lib/utils';
 import {
@@ -19,12 +21,15 @@ function speak(text: string) {
   window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
 }
 
-export default function Flashcards({ setId, cards, goTo }: ModeProps) {
+type Explain = { status: 'loading' | 'done' | 'error'; text: string };
+
+export default function Flashcards({ setId, title, cards, goTo }: ModeProps) {
   const [filter, setFilter] = useState<SourceFilter>('all');
   const [order, setOrder] = useState<string[] | null>(null);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [definitionFirst, setDefinitionFirst] = useState(false);
+  const [explains, setExplains] = useState<Record<string, Explain>>({});
 
   const deck = useMemo(() => {
     const base = filterCards(cards, filter);
@@ -47,9 +52,38 @@ export default function Flashcards({ setId, cards, goTo }: ModeProps) {
   function mark(known: boolean) {
     if (!card) return;
     updateCard(setId, card.id, { known });
+    logActivity(1);
     setFlipped(false);
     // In "still learning" mode a known card leaves the deck, so the index already points at the next one.
     if (!(filter === 'learning' && known)) setIndex((i) => i + 1);
+  }
+
+  async function explain() {
+    if (!card || explains[card.id]?.status === 'loading') return;
+    const id = card.id;
+    setExplains((m) => ({ ...m, [id]: { status: 'loading', text: '' } }));
+    try {
+      const res = await fetch('/api/explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          term: card.term,
+          definition: card.definition,
+          subject: title,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not explain this card.');
+      setExplains((m) => ({ ...m, [id]: { status: 'done', text: data.explanation } }));
+    } catch (err) {
+      setExplains((m) => ({
+        ...m,
+        [id]: {
+          status: 'error',
+          text: err instanceof Error ? err.message : 'Could not explain this card.',
+        },
+      }));
+    }
   }
 
   function toggleStar() {
@@ -192,6 +226,15 @@ export default function Flashcards({ setId, cards, goTo }: ModeProps) {
               >
                 <Icon name="volume" />
               </button>
+              <button
+                type="button"
+                onClick={explain}
+                disabled={explains[card.id]?.status === 'loading'}
+                className="btn btn-ghost !px-3 !py-2"
+              >
+                <Icon name="sparkles" size={16} />
+                {explains[card.id]?.status === 'loading' ? 'Thinking…' : 'Explain'}
+              </button>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -234,13 +277,28 @@ export default function Flashcards({ setId, cards, goTo }: ModeProps) {
               Got it
             </button>
           </div>
+          {explains[card.id] && explains[card.id].status !== 'loading' && (
+            <div
+              role="status"
+              className={`pop rounded-2xl border-2 border-ink p-4 ${
+                explains[card.id].status === 'error' ? 'bg-danger-soft' : 'bg-sky-soft'
+              }`}
+            >
+              <p className="mb-1 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-muted">
+                <Icon name="sparkles" size={14} />
+                {explains[card.id].status === 'error' ? 'Oops' : 'AI tutor'}
+              </p>
+              <p className="whitespace-pre-line">{explains[card.id].text}</p>
+            </div>
+          )}
           <p className="hidden text-center text-xs text-muted sm:block">
             Shortcuts: <kbd>Space</kbd> flip · <kbd>←</kbd> <kbd>→</kbd> navigate
           </p>
         </>
       ) : (
         <div className="panel flex flex-col items-center gap-4 px-6 py-14 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-success-soft text-success">
+          {deck.length > 0 && <Confetti />}
+          <span className="pop flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-ink bg-mint text-[#1b1033]">
             <Icon name="check" size={28} />
           </span>
           <h2 className="text-2xl font-semibold">

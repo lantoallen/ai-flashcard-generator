@@ -130,7 +130,7 @@ export default function CreateForm() {
       <div
         role="tablist"
         aria-label="How do you want to start?"
-        className="grid grid-cols-3 gap-1 rounded-xl bg-surface-2 p-1"
+        className="grid grid-cols-3 gap-1 rounded-xl border-2 border-ink bg-surface-2 p-1"
       >
         {TABS.map((t) => (
           <button
@@ -144,7 +144,7 @@ export default function CreateForm() {
             }}
             className={`flex items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-semibold transition-colors ${
               tab === t.id
-                ? 'bg-surface text-fg shadow-sm'
+                ? 'bg-ink text-bg'
                 : 'text-muted hover:text-fg'
             }`}
           >
@@ -273,7 +273,7 @@ export default function CreateForm() {
             <div
               role="radiogroup"
               aria-labelledby="level-label"
-              className="grid grid-cols-3 gap-1 rounded-xl bg-surface-2 p-1"
+              className="grid grid-cols-3 gap-1 rounded-xl border-2 border-ink bg-surface-2 p-1"
             >
               {LEVELS.map((l) => (
                 <button
@@ -284,7 +284,7 @@ export default function CreateForm() {
                   onClick={() => setLevel(l.id)}
                   className={`rounded-lg px-2 py-2 text-sm font-medium transition-colors ${
                     level === l.id
-                      ? 'bg-surface text-fg shadow-sm'
+                      ? 'bg-ink text-bg'
                       : 'text-muted hover:text-fg'
                   }`}
                 >

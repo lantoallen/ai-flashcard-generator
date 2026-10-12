@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Confetti from '@/components/Confetti';
 import { Icon } from '@/components/icons';
+import { logActivity } from '@/lib/activity';
 import { buildQuiz, type Direction, type QuizQuestion } from '@/lib/quiz';
 import { touchProgress } from '@/lib/storage';
 import {
@@ -47,6 +49,7 @@ export default function Quiz({ setId, cards, bestQuiz, goTo }: ModeProps) {
   }
 
   function pick(option: string) {
+    if (run && run.picked === null) logActivity(1);
     setRun((r) =>
       r && r.picked === null
         ? { ...r, picked: option, answers: [...r.answers, option] }
@@ -105,6 +108,8 @@ export default function Quiz({ setId, cards, bestQuiz, goTo }: ModeProps) {
       run.questions.filter((q, i) => run.answers[i] !== q.answer).map((q) => q.cardId)
     );
     return (
+      <>
+        {correct / items.length >= 0.8 && <Confetti />}
       <Results
         correct={correct}
         total={items.length}
@@ -115,6 +120,7 @@ export default function Quiz({ setId, cards, bestQuiz, goTo }: ModeProps) {
         }
         onNew={() => setRun(null)}
       />
+      </>
     );
   }
 

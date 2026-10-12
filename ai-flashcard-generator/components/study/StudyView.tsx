@@ -7,16 +7,20 @@ import { Icon, type IconName } from '@/components/icons';
 import { download, safeFileName, toCsv, toText } from '@/lib/export';
 import { deleteSet, useHydrated, useSet } from '@/lib/storage';
 import { SOURCE_LABEL } from '@/lib/types';
-import { validCards } from '@/lib/utils';
+import { encodeSet } from '@/lib/share';
+import { isDue } from '@/lib/srs';
+import { nowMs, validCards } from '@/lib/utils';
 import CardsEditor from './CardsEditor';
 import Flashcards from './Flashcards';
 import Match from './Match';
 import Quiz from './Quiz';
+import Review from './Review';
 import { ProgressBar, type Tab } from './shared';
 import Write from './Write';
 
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'flashcards', label: 'Flashcards', icon: 'layers' },
+  { id: 'review', label: 'Review', icon: 'repeat' },
   { id: 'quiz', label: 'Quiz', icon: 'quiz' },
   { id: 'write', label: 'Write', icon: 'type' },
   { id: 'match', label: 'Match', icon: 'grid' },
@@ -29,7 +33,7 @@ export default function StudyView() {
   const hydrated = useHydrated();
   const set = useSet(id);
   const [tab, setTab] = useState<Tab | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<'text' | 'link' | null>(null);
   const menuRef = useRef<HTMLDetailsElement>(null);
 
   const cards = useMemo(() => (set ? validCards(set.cards) : []), [set]);
@@ -65,8 +69,11 @@ export default function StudyView() {
   const active: Tab = tab ?? (cards.length === 0 ? 'cards' : 'flashcards');
   const known = cards.filter((c) => c.known).length;
 
+  const dueCount = cards.filter((c) => c.due !== undefined && isDue(c, nowMs())).length;
+
   const modeProps = {
     setId: set.id,
+    title: set.title,
     cards,
     bestQuiz: set.bestQuiz,
     bestMatchMs: set.bestMatchMs,
@@ -81,8 +88,21 @@ export default function StudyView() {
     if (!set) return;
     try {
       await navigator.clipboard.writeText(toText(set));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setCopied('text');
+      setTimeout(() => setCopied(null), 2500);
+    } catch {
+      /* clipboard blocked */
+    }
+    closeMenu();
+  }
+
+  async function copyLink() {
+    if (!set) return;
+    try {
+      const url = `${window.location.origin}/shared#${await encodeSet(set)}`;
+      await navigator.clipboard.writeText(url);
+      setCopied('link');
+      setTimeout(() => setCopied(null), 2500);
     } catch {
       /* clipboard blocked */
     }
@@ -108,7 +128,7 @@ export default function StudyView() {
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="break-words text-2xl font-bold tracking-tight sm:text-3xl">
+          <h1 className="font-display break-words text-3xl font-extrabold tracking-tight sm:text-4xl">
             {set.title || 'Untitled set'}
           </h1>
           {set.description && <p className="mt-1 text-muted">{set.description}</p>}
@@ -153,6 +173,10 @@ export default function StudyView() {
               >
                 Download backup (JSON)
               </button>
+              <button type="button" className="btn btn-ghost !justify-start" onClick={copyLink}>
+                <Icon name="link" size={16} />
+                Copy share link
+              </button>
               <button type="button" className="btn btn-ghost !justify-start" onClick={copyText}>
                 <Icon name="copy" size={16} />
                 Copy as text
@@ -169,9 +193,11 @@ export default function StudyView() {
           </button>
         </div>
       </div>
-      {copied && (
+      {copied !== null && (
         <p role="status" className="mt-3 text-sm font-medium text-success">
-          Copied to clipboard. Paste into Quizlet, Anki or Sheets.
+          {copied === 'link'
+            ? 'Share link copied. Anyone with it can add this set to their library.'
+            : 'Copied to clipboard. Paste into Quizlet, Anki or Sheets.'}
         </p>
       )}
 
@@ -187,7 +213,7 @@ export default function StudyView() {
       <div
         role="tablist"
         aria-label="Study mode"
-        className="-mx-1 mt-6 flex gap-1 overflow-x-auto rounded-2xl bg-surface-2 p-1"
+        className="mt-6 flex gap-1 overflow-x-auto rounded-2xl border-2 border-ink bg-surface-2 p-1"
       >
         {TABS.map((t) => (
           <button
@@ -198,12 +224,17 @@ export default function StudyView() {
             onClick={() => setTab(t.id)}
             className={`flex shrink-0 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
               active === t.id
-                ? 'bg-surface text-fg shadow-sm'
+                ? 'bg-ink text-bg'
                 : 'text-muted hover:text-fg'
             }`}
           >
             <Icon name={t.icon} size={16} />
             {t.label}
+            {t.id === 'review' && dueCount > 0 && (
+              <span className="rounded-full bg-coral px-1.5 text-xs font-extrabold text-[#1b1033]">
+                {dueCount}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -215,6 +246,7 @@ export default function StudyView() {
           ) : (
             <EmptyCards onEdit={() => setTab('cards')} />
           ))}
+        {active === 'review' && <Review {...modeProps} />}
         {active === 'quiz' && <Quiz {...modeProps} />}
         {active === 'write' && <Write {...modeProps} />}
         {active === 'match' && <Match {...modeProps} />}

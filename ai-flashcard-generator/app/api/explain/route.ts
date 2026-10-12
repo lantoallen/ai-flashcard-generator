@@ -1,0 +1,50 @@
+import { groq } from '@ai-sdk/groq';
+import { generateText } from 'ai';
+import { clientIp, jsonError, MODELS, rateLimited } from '@/lib/server';
+
+const clip = (v: unknown, max: number) =>
+  typeof v === 'string' ? v.trim().slice(0, max) : '';
+
+export async function POST(req: Request) {
+  if (rateLimited(clientIp(req))) {
+    return jsonError('Too many requests. Please wait a minute and try again.', 429);
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return jsonError('Invalid request.', 400);
+  }
+
+  const term = clip(body.term, 200);
+  const definition = clip(body.definition, 600);
+  const subject = clip(body.subject, 120);
+  if (!term || !definition) {
+    return jsonError('A term and definition are required.', 400);
+  }
+
+  const prompt = `You are a friendly tutor. A student is studying${
+    subject ? ` "${subject}"` : ''
+  } and wants help with this flashcard.
+
+Term: ${term}
+Definition: ${definition}
+
+Explain it in plain language in 2-3 short sentences, then give one concrete example or analogy that makes it stick. Do not use markdown headings or bullet points. Keep it under 90 words.`;
+
+  let lastError: unknown;
+  for (const model of MODELS) {
+    try {
+      const { text } = await generateText({ model: groq(model), prompt });
+      const explanation = text.trim();
+      if (explanation) return Response.json({ explanation });
+    } catch (err) {
+      lastError = err;
+      console.error(`Explain failed with ${model}:`, err);
+    }
+  }
+
+  console.error('All models failed:', lastError);
+  return jsonError('Could not generate an explanation right now. Please try again.', 502);
+}

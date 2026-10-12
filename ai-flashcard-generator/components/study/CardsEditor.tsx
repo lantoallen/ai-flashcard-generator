@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Icon } from '@/components/icons';
 import {
   addCard,
@@ -8,17 +9,63 @@ import {
   updateSet,
 } from '@/lib/storage';
 import type { StudySet } from '@/lib/types';
+import { uid } from '@/lib/utils';
+
+type ApiCard = { term: string; definition: string; distractors?: string[] };
 
 export default function CardsEditor({ set }: { set: StudySet }) {
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+
   const incomplete = set.cards.filter(
     (c) => !c.term.trim() || !c.definition.trim()
   ).length;
+
+  async function generateMore() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic: set.title.trim() || 'General knowledge',
+          count: 5,
+          exclude: set.cards.map((c) => c.term).filter((t) => t.trim()),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMessage({ kind: 'error', text: data.error || 'Something went wrong.' });
+        return;
+      }
+      const added: ApiCard[] = data.cards ?? [];
+      if (added.length === 0) {
+        setMessage({ kind: 'error', text: 'The AI had nothing new to add. Try again.' });
+        return;
+      }
+      updateSet(set.id, {
+        cards: [
+          ...set.cards,
+          ...added.map((c) => ({ id: uid(), ...c })),
+        ],
+      });
+      setMessage({
+        kind: 'ok',
+        text: `Added ${added.length} new card${added.length === 1 ? '' : 's'} at the bottom.`,
+      });
+    } catch {
+      setMessage({ kind: 'error', text: 'Network error. Please try again.' });
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
       <div className="panel flex flex-col gap-4 p-5">
         <div className="flex flex-col gap-2">
-          <label htmlFor="set-title" className="text-sm font-semibold">
+          <label htmlFor="set-title" className="text-sm font-bold">
             Title
           </label>
           <input
@@ -30,7 +77,7 @@ export default function CardsEditor({ set }: { set: StudySet }) {
           />
         </div>
         <div className="flex flex-col gap-2">
-          <label htmlFor="set-desc" className="text-sm font-semibold">
+          <label htmlFor="set-desc" className="text-sm font-bold">
             Description <span className="font-normal text-muted">(optional)</span>
           </label>
           <input
@@ -44,7 +91,7 @@ export default function CardsEditor({ set }: { set: StudySet }) {
       </div>
 
       {incomplete > 0 && (
-        <p className="rounded-xl bg-warn-soft px-4 py-3 text-sm font-medium text-warn">
+        <p className="rounded-xl border-2 border-ink bg-warn-soft px-4 py-3 text-sm font-semibold text-warn">
           {incomplete} card{incomplete === 1 ? ' is' : 's are'} missing a term or
           definition and will be skipped when studying.
         </p>
@@ -52,9 +99,9 @@ export default function CardsEditor({ set }: { set: StudySet }) {
 
       <ol className="flex flex-col gap-3">
         {set.cards.map((card, i) => (
-          <li key={card.id} className="panel flex flex-col gap-3 p-4">
+          <li key={card.id} className="panel-soft flex flex-col gap-3 p-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-muted">{i + 1}</span>
+              <span className="text-sm font-bold text-muted">{i + 1}</span>
               <div className="flex gap-1">
                 <button
                   type="button"
@@ -77,7 +124,7 @@ export default function CardsEditor({ set }: { set: StudySet }) {
             </div>
             <div className="grid gap-3 sm:grid-cols-[1fr_2fr]">
               <div className="flex flex-col gap-1">
-                <label htmlFor={`term-${card.id}`} className="text-xs font-semibold text-muted">
+                <label htmlFor={`term-${card.id}`} className="text-xs font-bold text-muted">
                   Term
                 </label>
                 <textarea
@@ -89,7 +136,7 @@ export default function CardsEditor({ set }: { set: StudySet }) {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label htmlFor={`def-${card.id}`} className="text-xs font-semibold text-muted">
+                <label htmlFor={`def-${card.id}`} className="text-xs font-bold text-muted">
                   Definition
                 </label>
                 <textarea
@@ -111,14 +158,44 @@ export default function CardsEditor({ set }: { set: StudySet }) {
         ))}
       </ol>
 
-      <button
-        type="button"
-        onClick={() => addCard(set.id)}
-        className="btn btn-secondary btn-lg w-full border-dashed"
-      >
-        <Icon name="plus" />
-        Add a card
-      </button>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => addCard(set.id)}
+          className="btn btn-secondary btn-lg"
+        >
+          <Icon name="plus" />
+          Add a card
+        </button>
+        <button
+          type="button"
+          onClick={generateMore}
+          disabled={busy}
+          className="btn btn-accent btn-lg"
+        >
+          {busy ? (
+            <>
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              Thinking…
+            </>
+          ) : (
+            <>
+              <Icon name="sparkles" />
+              Add 5 more with AI
+            </>
+          )}
+        </button>
+      </div>
+      {message && (
+        <p
+          role={message.kind === 'error' ? 'alert' : 'status'}
+          className={`text-sm font-semibold ${
+            message.kind === 'error' ? 'text-danger' : 'text-success'
+          }`}
+        >
+          {message.text}
+        </p>
+      )}
     </div>
   );
 }
