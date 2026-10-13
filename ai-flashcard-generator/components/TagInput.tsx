@@ -50,7 +50,7 @@ export default function TagInput({
               type="button"
               onClick={() => onChange(tags.filter((x) => x !== t))}
               aria-label={`Remove ${t}`}
-              className="-mr-1 rounded-full p-0.5 hover:bg-surface"
+              className="-mr-1 rounded-full p-1.5 hover:bg-surface sm:p-0.5"
             >
               <Icon name="x" size={12} />
             </button>

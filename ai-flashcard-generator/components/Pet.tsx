@@ -120,7 +120,7 @@ export default function Pet() {
   return (
     <div
       ref={rootRef}
-      className="no-print fixed bottom-4 right-4 z-40 flex flex-col items-end gap-2"
+      className="no-print fixed bottom-3 right-3 z-40 flex flex-col items-end gap-2 sm:bottom-4 sm:right-4"
     >
       {/* speech bubble for reactions */}
       {bubble && !open && (
@@ -271,7 +271,9 @@ export default function Pet() {
         aria-label={`${pet.name}, level ${lvl.level} study buddy. Open menu`}
         className="relative rounded-full transition-transform hover:scale-105 focus-visible:outline-offset-4"
       >
-        <PetFigure mood={mood} level={lvl.level} size={76} />
+        <span className="block origin-bottom-right max-sm:scale-[0.72]">
+          <PetFigure mood={mood} level={lvl.level} size={76} />
+        </span>
         <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-ink bg-sun px-1 text-[11px] font-extrabold text-[#1b1033]">
           {lvl.level}
         </span>

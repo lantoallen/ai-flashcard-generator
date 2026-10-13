@@ -203,6 +203,9 @@ h1, h2, h3 {
     @apply w-full rounded-xl bg-surface px-4 py-3 text-fg placeholder:text-muted/70;
     border: 2px solid var(--ink);
   }
+  .input {
+    text-overflow: ellipsis;
+  }
   .input:focus-visible {
     outline: none;
     box-shadow: 3px 3px 0 var(--primary);
@@ -352,5 +355,28 @@ h1, h2, h3 {
   :root:is([data-accent="custom"], [data-accent="indigo"], [data-accent="cyan"], [data-accent="green"],
            [data-accent="orange"], [data-accent="rose"], [data-accent="plum"], [data-accent="slate"]):not([data-theme="dark"]) {
     --primary-ink: oklch(from var(--user-accent) min(l, 0.5) c h);
+  }
+}
+
+/* Touch screens: bigger tap targets, without changing how anything looks on desktop. */
+@media (pointer: coarse) {
+  footer nav a {
+    display: inline-block;
+    padding-block: 0.5rem;
+  }
+  button.chip,
+  a.chip {
+    min-height: 2.25rem;
+  }
+  select.input,
+  select {
+    min-height: 2.25rem;
+  }
+  input[type="range"] {
+    min-height: 2rem;
+  }
+  main p a,
+  main li a {
+    padding-block: 0.15rem;
   }
 }

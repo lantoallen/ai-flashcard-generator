@@ -249,7 +249,7 @@ export default function StudyView() {
       <div
         role="tablist"
         aria-label="Study mode"
-        className="mt-6 flex gap-1 overflow-x-auto rounded-2xl border-2 border-ink bg-surface-2 p-1"
+        className="mt-6 grid grid-cols-4 gap-1 rounded-2xl border-2 border-ink bg-surface-2 p-1 sm:flex sm:overflow-x-auto"
       >
         {TABS.map((t) => (
           <button
@@ -258,7 +258,7 @@ export default function StudyView() {
             role="tab"
             aria-selected={active === t.id}
             onClick={() => setTab(t.id)}
-            className={`flex shrink-0 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+            className={`flex flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[11px] font-semibold leading-tight transition-colors sm:shrink-0 sm:flex-1 sm:flex-row sm:gap-2 sm:whitespace-nowrap sm:px-4 sm:py-2.5 sm:text-sm ${
               active === t.id
                 ? 'bg-ink text-bg'
                 : 'text-muted hover:text-fg'

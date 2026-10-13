@@ -531,7 +531,7 @@ export default function CreateForm() {
                   role="radio"
                   aria-checked={level === l.id}
                   onClick={() => setLevel(l.id)}
-                  className={`rounded-lg px-2 py-2 text-sm font-bold transition-colors ${
+                  className={`rounded-lg px-1 py-2 text-xs font-bold transition-colors sm:px-2 sm:text-sm ${
                     level === l.id ? 'bg-ink text-bg' : 'text-muted hover:text-fg'
                   }`}
                 >
