@@ -8,7 +8,9 @@ different ways. Free to run, no accounts, no database.
 - **Build cards by hand**: a Quizlet-style builder with title, description and
   term/definition rows. No card limit (the editor renders large sets in pages),
   Tab adds the next card, paste many at once, autosaved draft.
-- **AI generation** from pasted notes (up to 8,000 characters) or a topic, with
+- **AI generation** from pasted notes (up to 8,000 characters), an uploaded
+  **PDF or text file** (read in your browser, with a page range picker), or a
+  topic, with
   any card count from 3 to 200 (generated in batches) and a difficulty level.
 - **Automatic AI failover**: configure more than one provider and requests
   quietly switch to a backup if one is busy, rate-limited or down.

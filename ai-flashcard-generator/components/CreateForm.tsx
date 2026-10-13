@@ -8,6 +8,7 @@ import { ensureTerms } from '@/lib/consent';
 import { petReact } from '@/lib/pet';
 import { saveSet } from '@/lib/storage';
 import type { SetSource, StudySet } from '@/lib/types';
+import { FileReadError, joinPages, pagesThatFit, readFilePages } from '@/lib/pdf';
 import { parseCards, uid } from '@/lib/utils';
 
 type Tab = 'notes' | 'topic' | 'manual' | 'import';
@@ -61,6 +62,12 @@ export default function CreateForm() {
   const [partial, setPartial] = useState<{ title: string; cards: NewCard[] } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const notesFileRef = useRef<HTMLInputElement>(null);
+  const [doc, setDoc] = useState<{ name: string; pages: string[] } | null>(null);
+  const [from, setFrom] = useState(1);
+  const [to, setTo] = useState(1);
+  const [reading, setReading] = useState(false);
+  const [truncated, setTruncated] = useState(false);
 
   const typed = Number(countText);
   const countValid =
@@ -209,6 +216,35 @@ export default function CreateForm() {
     }
   }
 
+  function applyRange(pages: string[], a: number, b: number) {
+    const last = pages.length;
+    const f = Math.min(Math.max(1, a), last);
+    const t = Math.min(Math.max(f, b), last);
+    setFrom(f);
+    setTo(t);
+    const { text, truncated: cut } = joinPages(pages, f, t, MAX_NOTES);
+    setNotes(text);
+    setTruncated(cut);
+  }
+
+  async function onNotesFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setError('');
+    setReading(true);
+    try {
+      const pages = await readFilePages(file);
+      setDoc({ name: file.name, pages });
+      applyRange(pages, 1, pagesThatFit(pages, MAX_NOTES));
+    } catch (err) {
+      setDoc(null);
+      setError(err instanceof FileReadError ? err.message : 'That file couldn’t be read.');
+    } finally {
+      setReading(false);
+    }
+  }
+
   function startBlank() {
     finish('Untitled set', 'manual', [
       { term: '', definition: '' },
@@ -251,13 +287,75 @@ export default function CreateForm() {
       <form onSubmit={submit} className="flex flex-col gap-6">
       {tab === 'notes' && (
         <div className="flex flex-col gap-2">
-          <label htmlFor="notes" className="font-bold">
-            Your notes
-          </label>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <label htmlFor="notes" className="font-bold">
+              Your notes
+            </label>
+            <button
+              type="button"
+              onClick={() => notesFileRef.current?.click()}
+              disabled={reading}
+              className="btn btn-secondary !py-1.5"
+            >
+              <Icon name="upload" size={16} />
+              {reading ? 'Reading file…' : 'Upload PDF or text'}
+            </button>
+            <input
+              ref={notesFileRef}
+              type="file"
+              accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown"
+              className="hidden"
+              onChange={onNotesFile}
+            />
+          </div>
+
+          {doc && (
+            <div className="flex flex-col gap-2 rounded-xl border-2 border-line bg-surface-2 p-3 text-sm">
+              <p className="font-semibold">
+                <span className="break-all">{doc.name}</span>
+                <span className="text-muted">
+                  {' '}
+                  · {doc.pages.length} page{doc.pages.length === 1 ? '' : 's'}
+                </span>
+              </p>
+              {doc.pages.length > 1 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <label htmlFor="page-from" className="font-bold">Use pages</label>
+                  <input
+                    id="page-from"
+                    type="number"
+                    min={1}
+                    max={doc.pages.length}
+                    value={from}
+                    onChange={(e) => applyRange(doc.pages, Number(e.target.value) || 1, Math.max(to, Number(e.target.value) || 1))}
+                    className="input !w-20 !py-1.5 text-center"
+                  />
+                  <span>to</span>
+                  <input
+                    aria-label="Last page"
+                    type="number"
+                    min={from}
+                    max={doc.pages.length}
+                    value={to}
+                    onChange={(e) => applyRange(doc.pages, from, Number(e.target.value) || from)}
+                    className="input !w-20 !py-1.5 text-center"
+                  />
+                </div>
+              )}
+              <p className={truncated ? 'font-semibold text-warn' : 'text-muted'}>
+                {truncated
+                  ? `That's more than the ${MAX_NOTES.toLocaleString()} character limit, so only the start is used. Pick fewer pages for the rest.`
+                  : 'The text is filled in below. You can edit it before generating.'}
+              </p>
+            </div>
+          )}
           <textarea
             id="notes"
             value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+            onChange={(e) => {
+              setNotes(e.target.value);
+              setTruncated(false);
+            }}
             maxLength={MAX_NOTES}
             rows={10}
             placeholder="Paste lecture notes, a textbook section, an article…"
