@@ -18,11 +18,11 @@ export function PersonCard({ person, mine }: { person: Person; mine: string[] })
         <div className="min-w-0">
           <Link
             href={`/u/${person.username}`}
-            className="block truncate font-display text-lg font-extrabold hover:text-primary-ink"
+            className="line-clamp-2 break-words font-display text-lg font-extrabold hover:text-primary-ink"
           >
             {nameOf(person)}
           </Link>
-          <p className="truncate text-xs font-semibold text-muted">@{person.username}</p>
+          <p className="break-all text-xs font-semibold text-muted">@{person.username}</p>
         </div>
       </div>
 

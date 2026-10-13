@@ -22,7 +22,7 @@
   /* The accent when used as text/icons: kept readable even for pale custom colours. */
   --primary-ink: var(--primary);
 
-  --success: #12803f;
+  --success: #0f7035;
   --success-soft: #d8f7e3;
   --danger: #c42b3f;
   --danger-soft: #ffe1e5;
@@ -47,7 +47,7 @@
   --line: #3a3266;
   --ink: #f3efff;
   --fg: #f3efff;
-  --muted: #b6aed8;
+  --muted: #cbc4e8;
   --shadow-color: color-mix(in srgb, var(--primary) 55%, #000);
 
   --primary: #9b86ff;
@@ -135,7 +135,16 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
+@layer base {
+  /* Grid tracks may shrink below their content, so one long word can't widen a whole page. */
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 body {
+  /* Very long words (names, URLs) wrap instead of running off the screen. */
+  overflow-wrap: anywhere;
   background-color: var(--bg);
   background-image: radial-gradient(color-mix(in srgb, var(--ink) 11%, transparent) 1.2px, transparent 1.2px);
   background-size: 22px 22px;
@@ -229,10 +238,14 @@ h1, h2, h3 {
     color: #1b1033;
   }
   .brand-text {
-    background: linear-gradient(90deg, var(--coral), var(--primary));
+    background: linear-gradient(90deg, var(--coral), var(--primary-ink));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+  .cta-band {
+    background: linear-gradient(135deg, #1b1033 0%, color-mix(in srgb, var(--primary) 45%, #1b1033) 100%);
+    color: #ffffff;
   }
   .brand-bg {
     background: linear-gradient(135deg, var(--coral), var(--primary));

@@ -41,6 +41,7 @@ export default function StudyView() {
   const [tab, setTab] = useState<Tab | null>(null);
   const [copied, setCopied] = useState<'text' | 'link' | null>(null);
   const menuRef = useRef<HTMLDetailsElement>(null);
+  const [menuAlignRight, setMenuAlignRight] = useState(false);
 
   const cards = useMemo(() => (set ? validCards(set.cards) : []), [set]);
 
@@ -149,13 +150,23 @@ export default function StudyView() {
         </div>
 
         <div className="flex gap-2">
-          <details ref={menuRef} className="relative">
+          <details
+            ref={menuRef}
+            className="relative"
+            onToggle={(e) => {
+              // Open towards the side with room, so the menu never runs off the screen.
+              const el = e.currentTarget;
+              if (!el.open) return;
+              const left = el.getBoundingClientRect().left;
+              setMenuAlignRight(left + 224 > window.innerWidth - 8);
+            }}
+          >
             <summary className="btn btn-secondary list-none">
               <Icon name="download" size={16} />
               Export
               <Icon name="chevron" size={14} />
             </summary>
-            <div className="panel absolute right-0 z-20 mt-2 flex w-56 flex-col p-1.5 shadow-lg">
+            <div className={`panel absolute z-20 mt-2 flex w-56 flex-col p-1.5 shadow-lg ${menuAlignRight ? 'right-0' : 'left-0'}`}>
               <button
                 type="button"
                 className="btn btn-ghost !justify-start"

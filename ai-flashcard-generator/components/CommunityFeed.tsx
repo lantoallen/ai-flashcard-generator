@@ -280,7 +280,7 @@ export default function CommunityFeed() {
                     }}
                     className="flex w-full items-center justify-between gap-3 rounded-xl border-2 border-line p-3 text-left transition-colors duration-200 hover:border-ink"
                   >
-                    <span className="min-w-0 truncate font-bold">{s.title}</span>
+                    <span className="line-clamp-2 min-w-0 break-words font-bold">{s.title}</span>
                     <span className="shrink-0 text-xs font-semibold text-muted">
                       {validCards(s.cards).length} cards
                     </span>

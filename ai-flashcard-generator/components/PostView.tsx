@@ -238,7 +238,7 @@ function PostBody({ id }: { id: string }) {
             type="button"
             onClick={toggleLike}
             aria-pressed={liked}
-            className={`btn btn-lg ${liked ? 'bg-coral-soft text-coral' : 'btn-secondary'}`}
+            className={`btn btn-lg ${liked ? 'bg-coral-soft text-danger' : 'btn-secondary'}`}
           >
             <Icon name="heart" filled={liked} />
             {likeCount}

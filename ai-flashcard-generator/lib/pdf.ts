@@ -1,6 +1,9 @@
 /** Read text out of a PDF (or plain text file) entirely in the browser. */
 
-export class FileReadError extends Error {}
+import { readOtherFile, type ExtractedDoc } from './docs';
+import { FileReadError } from './errors';
+
+export { FileReadError };
 
 const MAX_BYTES = 20 * 1024 * 1024;
 const MAX_PAGES = 150;
@@ -17,21 +20,16 @@ function tidy(text: string): string {
     .trim();
 }
 
-/** One string per page. Text files come back as a single page. */
-export async function readFilePages(file: File): Promise<string[]> {
+/** Pages of text from a PDF, Office document, or plain text file. */
+export async function readDocument(file: File): Promise<ExtractedDoc> {
   if (file.size > MAX_BYTES) {
     throw new FileReadError('That file is too large. Please use one under 20 MB.');
   }
+  if (!isPdf(file)) return readOtherFile(file);
+  return { pages: await readPdfPages(file), unit: 'page' };
+}
 
-  if (!isPdf(file)) {
-    if (!/\.(txt|md|markdown|text)$/i.test(file.name) && !file.type.startsWith('text/')) {
-      throw new FileReadError('Please choose a PDF or a text file (.txt or .md).');
-    }
-    const text = tidy(await file.text());
-    if (!text) throw new FileReadError('That file is empty.');
-    return [text];
-  }
-
+async function readPdfPages(file: File): Promise<string[]> {
   // Loaded on demand: the PDF reader is large and most visits never need it.
   const pdfjs = await import('pdfjs-dist');
   pdfjs.GlobalWorkerOptions.workerSrc = new URL(

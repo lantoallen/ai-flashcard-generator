@@ -68,7 +68,7 @@ export default function ThemeMenu() {
         <div
           role="dialog"
           aria-label="Theme"
-          className="panel pop absolute right-0 top-full z-50 mt-3 w-72 p-4"
+          className="panel pop fixed inset-x-3 top-[4.75rem] z-50 max-h-[calc(100dvh-6rem)] overflow-y-auto p-4 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-3 sm:max-h-none sm:w-72 sm:overflow-visible"
         >
           <p className="text-xs font-extrabold uppercase tracking-wider text-muted">Mode</p>
           <div className="mt-2 grid grid-cols-2 gap-2">

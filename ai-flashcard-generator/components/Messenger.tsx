@@ -49,7 +49,7 @@ function ConversationList({
   return (
     <div className="panel flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="flex items-center justify-between gap-2 border-b-2 border-line px-4 py-3">
-        <h1 className="font-display text-xl font-extrabold">Messages</h1>
+        <h2 className="font-display text-xl font-extrabold">Conversations</h2>
         <Link href="/people" className="btn btn-secondary !px-3 !py-1.5 text-xs">
           <Icon name="plus" size={14} />
           New
@@ -89,7 +89,7 @@ function ConversationList({
                     <Avatar person={c.partner} size="md" />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-baseline justify-between gap-2">
-                        <span className="truncate font-bold">{nameOf(c.partner)}</span>
+                        <span className="truncate font-bold" title={nameOf(c.partner)}>{nameOf(c.partner)}</span>
                         <span className="shrink-0 text-[11px] font-semibold text-muted">
                           {timeAgo(c.lastAt, now)}
                         </span>
@@ -346,8 +346,8 @@ function Thread({ username }: { username: string }) {
           >
             <Avatar person={partner.data.profile} size="sm" />
             <span className="min-w-0">
-              <span className="block truncate font-bold">{nameOf(partner.data.profile)}</span>
-              <span className="block truncate text-xs font-semibold text-muted">
+              <span className="line-clamp-2 break-words font-bold">{nameOf(partner.data.profile)}</span>
+              <span className="block break-all text-xs font-semibold text-muted">
                 @{partner.data.profile.username}
               </span>
             </span>
@@ -395,7 +395,8 @@ function MessengerBody() {
   }, []);
 
   return (
-    <div className="grid h-[calc(100dvh-13rem)] min-h-[28rem] gap-4 md:grid-cols-[20rem_1fr]">
+    <div className="grid h-[calc(100dvh-13rem)] min-h-[28rem] gap-4 md:grid-cols-[20rem_minmax(0,1fr)]">
+      <h1 className="sr-only">Messages</h1>
       <aside className={`${username ? 'hidden md:flex' : 'flex'} min-h-0 flex-col`}>
         <ConversationList
           conversations={convos.data ?? []}

@@ -72,7 +72,7 @@ export default function PostCard({
             className="flex min-w-0 items-center gap-2 text-sm font-bold hover:text-primary-ink"
           >
             <Avatar person={post.author} size="xs" />
-            <span className="truncate">{nameOf(post.author)}</span>
+            <span className="truncate" title={nameOf(post.author)}>{nameOf(post.author)}</span>
           </Link>
         ) : (
           <span className="text-xs font-semibold text-muted">{timeAgo(post.createdAt, nowMs)}</span>
@@ -88,7 +88,7 @@ export default function PostCard({
             aria-pressed={liked}
             aria-label={`${liked ? 'Unlike' : 'Like'} (${post.likeCount})`}
             className={`inline-flex items-center gap-1 rounded-full px-2 py-1 transition-colors duration-200 ${
-              liked ? 'bg-coral-soft text-coral' : 'hover:bg-surface-2'
+              liked ? 'bg-coral-soft text-danger' : 'hover:bg-surface-2'
             }`}
           >
             <Icon name="heart" size={14} filled={liked} />

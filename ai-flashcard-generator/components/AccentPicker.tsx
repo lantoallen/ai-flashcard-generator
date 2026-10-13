@@ -24,7 +24,7 @@ export default function AccentPicker({
             aria-label={a.label}
             title={a.label}
             onClick={() => onChange(a.id)}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-white transition-transform duration-200 hover:scale-105"
+            className="flex aspect-square w-full max-w-10 items-center justify-center justify-self-center rounded-full text-white transition-transform duration-200 hover:scale-105"
             style={{
               background: a.color,
               border: '2px solid var(--ink)',

@@ -8,7 +8,8 @@ import { ensureTerms } from '@/lib/consent';
 import { petReact } from '@/lib/pet';
 import { saveSet } from '@/lib/storage';
 import type { SetSource, StudySet } from '@/lib/types';
-import { FileReadError, joinPages, pagesThatFit, readFilePages } from '@/lib/pdf';
+import { ACCEPT, type DocUnit } from '@/lib/docs';
+import { FileReadError, joinPages, pagesThatFit, readDocument } from '@/lib/pdf';
 import { parseCards, uid } from '@/lib/utils';
 
 type Tab = 'notes' | 'topic' | 'manual' | 'import';
@@ -63,7 +64,7 @@ export default function CreateForm() {
   const abortRef = useRef<AbortController | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const notesFileRef = useRef<HTMLInputElement>(null);
-  const [doc, setDoc] = useState<{ name: string; pages: string[] } | null>(null);
+  const [doc, setDoc] = useState<{ name: string; pages: string[]; unit: DocUnit } | null>(null);
   const [from, setFrom] = useState(1);
   const [to, setTo] = useState(1);
   const [reading, setReading] = useState(false);
@@ -234,8 +235,8 @@ export default function CreateForm() {
     setError('');
     setReading(true);
     try {
-      const pages = await readFilePages(file);
-      setDoc({ name: file.name, pages });
+      const { pages, unit } = await readDocument(file);
+      setDoc({ name: file.name, pages, unit });
       applyRange(pages, 1, pagesThatFit(pages, MAX_NOTES));
     } catch (err) {
       setDoc(null);
@@ -298,12 +299,12 @@ export default function CreateForm() {
               className="btn btn-secondary !py-1.5"
             >
               <Icon name="upload" size={16} />
-              {reading ? 'Reading file…' : 'Upload PDF or text'}
+              {reading ? 'Reading file…' : 'Upload a document'}
             </button>
             <input
               ref={notesFileRef}
               type="file"
-              accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown"
+              accept={ACCEPT}
               className="hidden"
               onChange={onNotesFile}
             />
@@ -315,12 +316,12 @@ export default function CreateForm() {
                 <span className="break-all">{doc.name}</span>
                 <span className="text-muted">
                   {' '}
-                  · {doc.pages.length} page{doc.pages.length === 1 ? '' : 's'}
+                  · {doc.pages.length} {doc.unit}{doc.pages.length === 1 ? '' : 's'}
                 </span>
               </p>
               {doc.pages.length > 1 && (
                 <div className="flex flex-wrap items-center gap-2">
-                  <label htmlFor="page-from" className="font-bold">Use pages</label>
+                  <label htmlFor="page-from" className="font-bold">Use {doc.unit}s</label>
                   <input
                     id="page-from"
                     type="number"
@@ -332,7 +333,7 @@ export default function CreateForm() {
                   />
                   <span>to</span>
                   <input
-                    aria-label="Last page"
+                    aria-label={`Last ${doc.unit}`}
                     type="number"
                     min={from}
                     max={doc.pages.length}
@@ -344,7 +345,7 @@ export default function CreateForm() {
               )}
               <p className={truncated ? 'font-semibold text-warn' : 'text-muted'}>
                 {truncated
-                  ? `That's more than the ${MAX_NOTES.toLocaleString()} character limit, so only the start is used. Pick fewer pages for the rest.`
+                  ? `That's more than the ${MAX_NOTES.toLocaleString()} character limit, so only the start is used. Pick fewer ${doc.unit}s for the rest.`
                   : 'The text is filled in below. You can edit it before generating.'}
               </p>
             </div>
@@ -531,7 +532,7 @@ export default function CreateForm() {
                   role="radio"
                   aria-checked={level === l.id}
                   onClick={() => setLevel(l.id)}
-                  className={`rounded-lg px-1 py-2 text-xs font-bold transition-colors sm:px-2 sm:text-sm ${
+                  className={`rounded-lg px-0.5 py-2 text-[11px] font-bold transition-colors min-[360px]:text-xs sm:px-2 sm:text-sm ${
                     level === l.id ? 'bg-ink text-bg' : 'text-muted hover:text-fg'
                   }`}
                 >
@@ -587,6 +588,7 @@ export default function CreateForm() {
         <button
           type="submit"
           disabled={!canGenerate || loading}
+          aria-describedby={!canGenerate && !loading ? 'generate-hint' : undefined}
           className="btn btn-primary btn-lg"
         >
           {loading ? (
@@ -614,6 +616,17 @@ export default function CreateForm() {
           >
             Cancel
           </button>
+        )}
+        {!loading && !canGenerate && (
+          <p id="generate-hint" className="text-sm font-semibold text-muted">
+            {tab === 'notes' && notes.trim().length < 20
+              ? 'Paste at least a couple of sentences, or upload a file, to continue.'
+              : tab === 'topic' && topic.trim().length === 0
+                ? 'Type a topic to continue.'
+                : tab === 'import'
+                  ? 'Add at least 2 cards (one per line) to continue.'
+                  : `Choose between ${MIN_CARDS} and ${MAX_CARDS} cards.`}
+          </p>
         )}
       </div>
       </form>

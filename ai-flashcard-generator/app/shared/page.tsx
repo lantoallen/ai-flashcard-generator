@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 export default function SharedPage() {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-12 sm:px-6">
+      <h1 className="sr-only">Shared study set</h1>
       <SharedImport />
     </div>
   );

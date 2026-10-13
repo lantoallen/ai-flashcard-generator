@@ -309,7 +309,7 @@ export default function Home() {
 
       {/* Final CTA */}
       <section className="mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6">
-        <div className="panel brand-bg relative flex flex-col items-center gap-5 overflow-hidden px-6 py-16 text-center text-white">
+        <div className="panel cta-band relative flex flex-col items-center gap-5 overflow-hidden px-6 py-16 text-center">
           <Blob className="-left-6 -top-6 h-20 w-20 bg-sun" />
           <Blob className="-bottom-5 right-10 h-14 w-14 bg-mint" />
           <h2 className="font-display relative text-4xl font-extrabold tracking-tight sm:text-5xl">
